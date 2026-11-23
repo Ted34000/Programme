@@ -1,0 +1,438 @@
+<title>Référentiel Excel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : appli mobile à une colonne — en-tête collant (titre, recherche, thèmes), liste de fiches, vue fiche avec « barre de formule » façon Excel. */
+:root {
+  --bg: #F3F7FB;
+  --surface: #FFFFFF;
+  --ink: #1F2D3D;
+  --muted: #5A6B7E;
+  --line: #D6E2EE;
+  --marine: #2B4A6F;
+  --accent: #2F6FA8;
+  --band: #BCD9EE;
+  --soft: #E6F0F8;
+  --fx-bg: #FBFCFD;
+  --fx-bar: #EEF3F8;
+  --code-ink: #16324F;
+  --ok: #2E7D4F;
+  --chip-ink: #1F2D3D;
+  --shadow: 0 1px 2px rgba(31,45,61,.06), 0 2px 8px rgba(31,45,61,.05);
+  --f-ui: "IBM Plex Sans Condensed", "Aptos Narrow", "Arial Narrow", system-ui, sans-serif;
+  --f-code: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111923; --surface: #18222E; --ink: #E3EAF2; --muted: #9AABBD; --line: #2A3A4C;
+    --marine: #A9CBEA; --accent: #7DB3E3; --band: #1F3550; --soft: #1D2B3B;
+    --fx-bg: #141D27; --fx-bar: #1D2836; --code-ink: #D5E6F7; --ok: #7FD1A0; --chip-ink: #111923;
+    --shadow: 0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111923; --surface: #18222E; --ink: #E3EAF2; --muted: #9AABBD; --line: #2A3A4C;
+  --marine: #A9CBEA; --accent: #7DB3E3; --band: #1F3550; --soft: #1D2B3B;
+  --fx-bg: #141D27; --fx-bar: #1D2836; --code-ink: #D5E6F7; --ok: #7FD1A0; --chip-ink: #111923;
+  --shadow: 0 1px 2px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-ui); font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 96px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 720px; margin: 0 auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* En-tête */
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); padding-block: 14px 10px; display: grid; gap: 10px;
+}
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.brand h1 { margin: 0; font-size: 1.45rem; font-weight: 700; color: var(--marine); letter-spacing: -.01em; }
+.brand .meta { font-size: .8rem; color: var(--muted); text-align: right; }
+.search { position: relative; }
+.search input {
+  width: 100%; padding: 11px 12px 11px 38px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--surface); font-size: 1rem;
+}
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; stroke: var(--muted); fill: none; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 5px 12px; font-size: .88rem; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.chip[aria-pressed="true"] { background: var(--marine); border-color: var(--marine); color: var(--bg); }
+
+/* Liste */
+.list { display: grid; gap: 8px; padding-top: 4px; }
+.card {
+  display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow);
+}
+.card:active { transform: scale(.995); }
+.num {
+  width: 40px; height: 40px; border-radius: 9px; display: grid; place-items: center;
+  font-family: var(--f-code); font-weight: 500; font-size: .95rem; color: var(--chip-ink);
+}
+.card h2 { margin: 0 0 2px; font-size: 1.05rem; font-weight: 600; line-height: 1.3; color: var(--ink); text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); font-size: .9rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tag { display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 1px 7px; border-radius: 5px; color: var(--chip-ink); margin-bottom: 4px; }
+.group-title { margin: 14px 2px 2px; font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.empty { text-align: center; color: var(--muted); padding: 40px 12px; background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; }
+.empty strong { color: var(--ink); display: block; margin-bottom: 4px; }
+
+/* Fiche */
+.back { display: inline-flex; align-items: center; gap: 4px; background: none; border: 0; color: var(--accent); font-weight: 600; padding: 6px 0; cursor: pointer; text-decoration: none; }
+.fiche { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 16px 20px; box-shadow: var(--shadow); min-width: 0; }
+.eyebrow { display: flex; gap: 8px; align-items: center; font-size: .85rem; color: var(--muted); }
+.fiche h2 { margin: 6px 0 12px; font-size: 1.4rem; line-height: 1.25; color: var(--marine); text-wrap: balance; }
+.body { min-width: 0; }
+.body p { margin: 0 0 10px; }
+.body p.lead { font-size: 1.05rem; background: var(--soft); padding: 10px 12px; border-radius: 10px; }
+.body h3 { margin: 18px 0 6px; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.body ul, .body ol { margin: 0 0 10px; padding-left: 22px; }
+.body li { margin-bottom: 4px; }
+.body li.sub { list-style: none; margin-left: 4px; position: relative; }
+.body li.sub::before { content: "–"; position: absolute; left: -14px; color: var(--muted); }
+.body code { font-family: var(--f-code); font-size: .86em; background: var(--soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.table-wrap { overflow-x: auto; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--soft); color: var(--marine); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+
+/* Barre de formule */
+.fx { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 4px 0 14px; background: var(--fx-bg); }
+.fx-bar { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--fx-bar); border-bottom: 1px solid var(--line); }
+.fx-ico { font-family: var(--f-code); font-style: italic; font-weight: 500; color: var(--muted); padding: 0 4px; border-right: 1px solid var(--line); margin-right: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 3px 10px; font-size: .8rem; font-weight: 600; cursor: pointer; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--marine); }
+.copy { margin-left: auto; border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 4px 10px; font-size: .82rem; font-weight: 600; cursor: pointer; color: var(--accent); }
+.copy.done { color: var(--ok); }
+.fx pre { margin: 0; padding: 10px 12px; font-family: var(--f-code); font-size: .86rem; line-height: 1.55; color: var(--code-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.pager a { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; text-decoration: none; color: inherit; min-width: 0; }
+.pager a span { display: block; font-size: .75rem; color: var(--muted); }
+.pager a b { display: block; font-weight: 600; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--marine); }
+.pager a.next { text-align: right; grid-column: 2; }
+
+/* Formulaire */
+.form { display: grid; gap: 12px; }
+.form label { display: grid; gap: 4px; font-weight: 600; font-size: .9rem; color: var(--marine); }
+.form small { font-weight: 400; color: var(--muted); }
+.form input, .form select, .form textarea { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; background: #FFFBE6; color: #1F2D3D; font-weight: 400; }
+.form textarea { min-height: 70px; resize: vertical; }
+.form textarea.code { font-family: var(--f-code); font-size: .88rem; }
+.primary { background: var(--marine); color: var(--bg); border: 0; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer; }
+.msg { font-size: .9rem; color: var(--muted); }
+.fab {
+  position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  background: var(--marine); color: var(--bg); border-radius: 999px; padding: 12px 18px; font-weight: 700;
+  text-decoration: none; box-shadow: 0 4px 14px rgba(31,45,61,.25); z-index: 6;
+}
+.status { font-size: .82rem; color: var(--muted); padding: 6px 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top" id="top">
+    <div class="brand">
+      <h1>Référentiel Excel</h1>
+      <div class="meta" id="meta">Formules du cabinet</div>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="Rechercher : DECALER, jour ouvré, couleur…" autocomplete="off" aria-label="Rechercher une fiche">
+    </div>
+    <div class="chips" id="chips" role="toolbar" aria-label="Thèmes"></div>
+  </header>
+  <main id="view"></main>
+</div>
+<a class="fab" id="fab" href="#ajouter" hidden>+ Fiche</a>
+
+<script>
+const COULEURS = { "Saisie": "#F4B6C2", "Dates": "#F6C98D", "Navigation": "#CDB8E8", "Mise en forme": "#A7DCE0",
+  "Calcul": "#F2DC8C", "Recherche": "#9CC7E8", "Astuces": "#E8C547" };
+const RESERVE = ["#A8D5BA", "#F4A6AE", "#B8C7E8", "#D9C3A5", "#C5E0A5"];
+const couleur = t => COULEURS[t] || RESERVE[[...(t || "")].reduce((a, c) => a + c.charCodeAt(0), 0) % RESERVE.length];
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+let fiches = store.get("ref-cache", []);
+let etat = fiches.length ? "cache" : "chargement";
+let theme = "Tous";
+let langue = store.get("ref-langue", "fr");
+let peutEcrire = false;
+let dbRef = null;
+const formules = [];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+function inline(s) {
+  return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
+
+function formule(fr, en) {
+  const i = formules.push({ fr, en }) - 1;
+  const deux = fr && en;
+  const l = deux ? langue : (fr ? "fr" : "en");
+  return `<div class="fx" data-i="${i}"><div class="fx-bar"><span class="fx-ico">fx</span>` +
+    (deux ? `<div class="seg" role="group" aria-label="Langue de la formule"><button data-l="fr" aria-pressed="${l === "fr"}">FR</button><button data-l="en" aria-pressed="${l === "en"}">EN</button></div>`
+          : `<span class="msg">${fr ? "FR" : "EN"}</span>`) +
+    `<button class="copy">Copier</button></div><pre>${esc(l === "fr" ? fr : en)}</pre></div>`;
+}
+
+function md(src) {
+  const L = String(src || "").split("\n");
+  const out = [];
+  let liste = null, i = 0, premier = true;
+  const fermer = () => { if (liste) { out.push(`</${liste}>`); liste = null; } };
+  const reEN = /^EN\s*:\s*`(.+)`\s*$/;
+  while (i < L.length) {
+    const brut = L[i], t = brut.trim();
+    let m;
+    if (t.startsWith("```")) {
+      fermer();
+      const code = [];
+      i++;
+      while (i < L.length && !L[i].trim().startsWith("```")) { code.push(L[i].trim()); i++; }
+      i++;
+      let j = i;
+      while (j < L.length && !L[j].trim()) j++;
+      let en = null;
+      if (j < L.length && (m = L[j].trim().match(reEN))) { en = m[1]; i = j + 1; }
+      out.push(formule(code.join("\n"), en));
+      continue;
+    }
+    if ((m = t.match(reEN))) { fermer(); out.push(formule(null, m[1])); i++; continue; }
+    if (t.startsWith("|")) {
+      fermer();
+      const lignes = [];
+      while (i < L.length && L[i].trim().startsWith("|")) { lignes.push(L[i].trim()); i++; }
+      const cel = r => r.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+      const rows = lignes.filter(r => !/^\|[\s\-:|]+\|$/.test(r)).map(cel);
+      if (rows.length) {
+        out.push(`<div class="table-wrap"><table><thead><tr>${rows[0].map(c => `<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>` +
+          rows.slice(1).map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join("")}</tr>`).join("") + "</tbody></table></div>");
+      }
+      continue;
+    }
+    if ((m = t.match(/^[-*]\s+(.*)/))) {
+      const sous = /^\s{2,}/.test(brut);
+      if (sous && liste) { out.push(`<li class="sub">${inline(m[1])}</li>`); }
+      else { if (liste !== "ul") { fermer(); out.push("<ul>"); liste = "ul"; } out.push(`<li>${inline(m[1])}</li>`); }
+      i++; continue;
+    }
+    if ((m = t.match(/^(\d+)\.\s+(.*)/))) {
+      if (liste !== "ol") { fermer(); out.push(`<ol start="${m[1]}">`); liste = "ol"; }
+      out.push(`<li>${inline(m[2])}</li>`);
+      i++; continue;
+    }
+    if (!t) { if (!/^\s+/.test(L[i + 1] || "")) fermer(); i++; continue; }
+    fermer();
+    if ((m = t.match(/^\*\*([^*]+)\*\*$/))) { out.push(`<h3>${esc(m[1])}</h3>`); }
+    else { out.push(`<p${premier && /^\*\*Objectif/.test(t) ? ' class="lead"' : ""}>${inline(t)}</p>`); }
+    premier = false;
+    i++;
+  }
+  fermer();
+  return out.join("");
+}
+
+function objectif(f) {
+  const m = String(f.corps || "").match(/\*\*Objectif\s*:\*\*\s*(.+)/);
+  return m ? m[1].replace(/`/g, "") : "";
+}
+
+function themes() {
+  const vus = [];
+  fiches.forEach(f => { if (f.theme && !vus.includes(f.theme)) vus.push(f.theme); });
+  return vus;
+}
+
+function rendreChips() {
+  const t = ["Tous", ...themes()];
+  if (!t.includes(theme)) theme = "Tous";
+  $("#chips").innerHTML = t.map(x => `<button class="chip" data-t="${esc(x)}" aria-pressed="${x === theme}">${esc(x)}</button>`).join("");
+}
+
+function rendreMeta() {
+  const dates = fiches.map(f => f.maj).filter(Boolean).sort();
+  const d = dates.length ? dates[dates.length - 1].split("-").reverse().join("/") : "";
+  $("#meta").textContent = fiches.length ? `${fiches.length} fiches${d ? " · maj " + d : ""}` : "Formules du cabinet";
+}
+
+function vueListe() {
+  $("#top").hidden = false;
+  const q = norm($("#q").value.trim());
+  const liste = fiches.filter(f => (theme === "Tous" || f.theme === theme) &&
+    (!q || norm(`${f.num} ${f.titre} ${f.theme} ${f.corps}`).includes(q)));
+  let h = "";
+  if (etat === "chargement") h = `<div class="empty"><strong>Chargement des fiches…</strong>Les fiches du référentiel s'affichent ici.</div>`;
+  else if (etat === "indispo" && !fiches.length) h = `<div class="empty"><strong>Fiches indisponibles ici</strong>Ouvre l'appli depuis claude.ai ou l'application Claude, connecté à ton compte.</div>`;
+  else if (!fiches.length) h = `<div class="empty"><strong>Aucune fiche pour l'instant</strong>Demande à Claude « ajoute ça au référentiel Excel », ou touche « + Fiche ».</div>`;
+  else if (!liste.length) h = `<div class="empty"><strong>Aucune fiche trouvée</strong>Essaie un autre mot : une fonction (RECHERCHEV, DECALER…) ou un besoin (date, couleur…).</div>`;
+  else {
+    let dernier = null;
+    h = '<div class="list">' + liste.map(f => {
+      const titre = theme === "Tous" && !q && f.theme !== dernier ? `<div class="group-title">${esc(f.theme)}</div>` : "";
+      dernier = f.theme;
+      return titre + `<a class="card" href="#f-${f.num}"><span class="num" style="background:${couleur(f.theme)}">${f.num}</span>` +
+        `<div style="min-width:0"><h2>${esc(f.titre)}</h2><p>${esc(objectif(f))}</p></div></a>`;
+    }).join("") + "</div>";
+  }
+  if (etat === "cache") h += `<div class="status">Affichage de la dernière version enregistrée sur cet appareil…</div>`;
+  $("#view").innerHTML = h;
+}
+
+function vueFiche(num) {
+  $("#top").hidden = true;
+  const idx = fiches.findIndex(f => String(f.num) === String(num));
+  const f = fiches[idx];
+  formules.length = 0;
+  if (!f) {
+    $("#view").innerHTML = `<a class="back" href="#">‹ Toutes les fiches</a><div class="empty"><strong>Fiche ${esc(num)} introuvable</strong>${etat === "chargement" ? "Chargement…" : "Elle a peut-être été renumérotée."}</div>`;
+    return;
+  }
+  const prec = fiches[idx - 1], suiv = fiches[idx + 1];
+  $("#view").innerHTML = `<a class="back" href="#">‹ Toutes les fiches</a>
+    <article class="fiche">
+      <div class="eyebrow"><span class="tag" style="background:${couleur(f.theme)}">${esc(f.theme)}</span><span>Fiche ${f.num}</span></div>
+      <h2>${esc(f.titre)}</h2>
+      <div class="body">${md(f.corps)}</div>
+    </article>
+    <nav class="pager">${prec ? `<a href="#f-${prec.num}"><span>‹ Fiche ${prec.num}</span><b>${esc(prec.titre)}</b></a>` : ""}${suiv ? `<a class="next" href="#f-${suiv.num}"><span>Fiche ${suiv.num} ›</span><b>${esc(suiv.titre)}</b></a>` : ""}</nav>`;
+  window.scrollTo(0, 0);
+}
+
+function vueAjout() {
+  $("#top").hidden = true;
+  if (!peutEcrire) {
+    $("#view").innerHTML = `<a class="back" href="#">‹ Toutes les fiches</a><div class="empty"><strong>Ajout indisponible</strong>Seul le propriétaire du référentiel peut ajouter une fiche. Tu peux aussi demander à Claude « ajoute ça au référentiel Excel ».</div>`;
+    return;
+  }
+  const opts = themes().map(t => `<option>${esc(t)}</option>`).join("");
+  $("#view").innerHTML = `<a class="back" href="#">‹ Toutes les fiches</a>
+  <article class="fiche"><h2>Nouvelle fiche</h2>
+  <form class="form" id="form">
+    <label>Titre<input id="f-titre" required placeholder="Ex. : Extraire le SIREN d'un SIRET"></label>
+    <label>Thème<select id="f-theme">${opts}<option value="__autre">Autre thème…</option></select></label>
+    <label id="l-autre" hidden>Nouveau thème<input id="f-autre" placeholder="Ex. : Texte"></label>
+    <label>Objectif<textarea id="f-obj" required placeholder="À quoi sert la technique, en une ou deux phrases."></textarea></label>
+    <label>Formule (FR) <small>avec des ; comme dans Excel FR</small><textarea id="f-fr" class="code" placeholder="=GAUCHE(A2;9)"></textarea></label>
+    <label>Formule (EN) <small>facultatif</small><textarea id="f-en" class="code" placeholder="=LEFT(A2,9)"></textarea></label>
+    <label>Comment ça marche <small>facultatif</small><textarea id="f-com"></textarea></label>
+    <label>Mes fichiers <small>facultatif</small><input id="f-fic" placeholder="Ex. : Tableau de Bord 2026, feuille Dossiers"></label>
+    <button class="primary" type="submit" id="f-ok">Ajouter la fiche</button>
+    <div class="msg" id="f-msg">La fiche apparaît tout de suite sur tous tes appareils. Pense à demander à Claude de la recopier dans le référentiel (fichier Markdown).</div>
+  </form></article>`;
+  $("#f-theme").addEventListener("change", e => { $("#l-autre").hidden = e.target.value !== "__autre"; });
+  $("#form").addEventListener("submit", ajouter);
+}
+
+async function ajouter(e) {
+  e.preventDefault();
+  const v = id => $(id).value.trim();
+  const th = v("#f-theme") === "__autre" ? v("#f-autre") : v("#f-theme");
+  if (!th) { $("#f-msg").textContent = "Indique le nom du nouveau thème."; return; }
+  const num = fiches.reduce((m, f) => Math.max(m, Number(f.num) || 0), 0) + 1;
+  let corps = `**Objectif :** ${v("#f-obj")}\n`;
+  if (v("#f-fr") || v("#f-en")) {
+    if (v("#f-fr")) corps += "\n```\n" + v("#f-fr") + "\n```\n";
+    if (v("#f-en")) corps += "EN : `" + v("#f-en").replace(/`/g, "'") + "`\n";
+  }
+  if (v("#f-com")) corps += `\n**Comment ça marche :** ${v("#f-com")}\n`;
+  if (v("#f-fic")) corps += `\n**Mes fichiers :** ${v("#f-fic")}\n`;
+  const doc = { num, theme: th, titre: v("#f-titre"), corps: corps.trim(), maj: new Date().toISOString().slice(0, 10), source: "appli" };
+  $("#f-ok").disabled = true;
+  $("#f-msg").textContent = "Enregistrement…";
+  try {
+    await dbRef.collection("fiches").doc("f" + String(num).padStart(2, "0")).set(doc);
+    location.hash = "#f-" + num;
+  } catch (err) {
+    $("#f-ok").disabled = false;
+    $("#f-msg").textContent = err && err.code === "not_granted"
+      ? "Ajout refusé : tu n'as pas le droit d'écrire dans ce référentiel."
+      : "La fiche n'a pas pu être enregistrée (connexion ?). Réessaie dans un instant.";
+  }
+}
+
+function route() {
+  const h = location.hash.replace(/^#/, "");
+  $("#fab").hidden = !peutEcrire || h === "ajouter";
+  if (h === "ajouter") return vueAjout();
+  const m = h.match(/^f-(\d+)$/);
+  if (m) return vueFiche(m[1]);
+  rendreChips(); rendreMeta(); vueListe();
+}
+
+document.addEventListener("click", async e => {
+  const chip = e.target.closest(".chip");
+  if (chip) { theme = chip.dataset.t; rendreChips(); vueListe(); return; }
+  const seg = e.target.closest(".seg button");
+  if (seg) {
+    langue = seg.dataset.l; store.set("ref-langue", langue);
+    document.querySelectorAll(".fx").forEach(fx => {
+      const f = formules[fx.dataset.i];
+      if (!f.fr || !f.en) return;
+      fx.querySelector("pre").textContent = langue === "fr" ? f.fr : f.en;
+      fx.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.l === langue));
+    });
+    return;
+  }
+  const cp = e.target.closest(".copy");
+  if (cp) {
+    const pre = cp.closest(".fx").querySelector("pre");
+    const texte = pre.textContent;
+    const ok = () => { cp.textContent = "Copiée ✓"; cp.classList.add("done"); setTimeout(() => { cp.textContent = "Copier"; cp.classList.remove("done"); }, 1600); };
+    try { await navigator.clipboard.writeText(texte); ok(); }
+    catch (err) {
+      const r = document.createRange(); r.selectNodeContents(pre);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      cp.textContent = "Sélectionnée";
+    }
+  }
+});
+$("#q").addEventListener("input", vueListe);
+window.addEventListener("hashchange", route);
+route();
+
+(async () => {
+  const use = window.claude && window.claude.use;
+  const db = use ? await window.claude.use("db") : null;
+  if (!db) { if (etat !== "cache") etat = "indispo"; route(); return; }
+  dbRef = db;
+  const minuteur = setTimeout(() => { if (etat === "chargement") { etat = "indispo"; route(); } }, 10000);
+  db.collection("fiches").onSnapshot(snap => {
+    clearTimeout(minuteur);
+    fiches = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.num || 0) - (b.num || 0));
+    etat = "ok";
+    store.set("ref-cache", fiches);
+    if (document.activeElement && document.activeElement.closest && document.activeElement.closest("#form")) return;
+    route();
+  }, () => { clearTimeout(minuteur); if (etat !== "cache") etat = "indispo"; route(); });
+  const user = await window.claude.use("user");
+  if (user) {
+    try { const c = await user.can("data.write"); peutEcrire = c === null ? await user.isOwner() : c; } catch (e) { peutEcrire = false; }
+  }
+  if (!/^#ajouter$/.test(location.hash) || peutEcrire) route();
+})();
+</script>

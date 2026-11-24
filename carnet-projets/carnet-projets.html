@@ -1,0 +1,875 @@
+<title>Carnet de projets</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Poppins:wght@400;600&family=Playfair+Display:wght@600&family=Lora:wght@400;600&family=Merriweather:wght@400;700&family=Caveat:wght@500;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : appli à onglets — barre d'en-tête collante (nom + 3 onglets), zone de saisie rapide en tête de chaque vue, puis la matière (mur de notes, cartes projets, liste de tâches groupée par échéance). */
+:root {
+  --bg: #F3F5F4;
+  --surface: #FFFFFF;
+  --sunk: #E9EDEB;
+  --ink: #17201D;
+  --muted: #5B6863;
+  --line: #D8DFDC;
+  --accent: #1F6F5C;
+  --accent-ink: #FFFFFF;
+  --danger: #B3261E;
+  --warn: #9A5B00;
+  --ok: #2E7D4F;
+  --n-paper: #FFFFFF;
+  --n-sun: #FFF4C2;
+  --n-mint: #D9F2E4;
+  --n-sky: #DCEBFA;
+  --n-rose: #FBE0E3;
+  --n-sand: #F3E6D3;
+  --shadow: 0 1px 2px rgba(23,32,29,.06), 0 3px 10px rgba(23,32,29,.05);
+  --f-ui: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-display: "Space Grotesk", "Manrope", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111614; --surface: #19201D; --sunk: #141A18; --ink: #E4EBE8; --muted: #97A5A0; --line: #2A3430;
+    --accent: #5CC2A6; --accent-ink: #0C1A15; --danger: #F2867E; --warn: #E9B25A; --ok: #7FD1A0;
+    --n-paper: #1D2521; --n-sun: #3A3418; --n-mint: #183428; --n-sky: #1A2C3F; --n-rose: #3B2025; --n-sand: #33291C;
+    --shadow: 0 1px 2px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #19201D; --sunk: #141A18; --ink: #E4EBE8; --muted: #97A5A0; --line: #2A3430;
+  --accent: #5CC2A6; --accent-ink: #0C1A15; --danger: #F2867E; --warn: #E9B25A; --ok: #7FD1A0;
+  --n-paper: #1D2521; --n-sun: #3A3418; --n-mint: #183428; --n-sky: #1A2C3F; --n-rose: #3B2025; --n-sand: #33291C;
+  --shadow: 0 1px 2px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-ui); font-size: 15px; line-height: 1.5; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* En-tête */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; gap: 16px; padding-block: 10px; flex-wrap: wrap; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; margin-right: auto; }
+.brand-mark { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: grid; place-items: center; color: var(--accent-ink); font-size: 13px; }
+nav.tabs { display: flex; gap: 4px; background: var(--sunk); padding: 4px; border-radius: 999px; }
+.tab { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.tab[aria-current="page"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.tab .count { font-size: .75rem; font-variant-numeric: tabular-nums; background: var(--line); color: var(--ink); border-radius: 999px; padding: 0 7px; }
+.tab[aria-current="page"] .count { background: var(--accent); color: var(--accent-ink); }
+.sync { font-size: .75rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.sync i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.sync.on i { background: var(--ok); }
+
+main { padding-block: 20px 60px; }
+.view-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+h1.view-title { font-family: var(--f-display); font-size: 1.6rem; margin: 0; letter-spacing: -.02em; text-wrap: balance; }
+.hint { color: var(--muted); font-size: .85rem; }
+
+/* Saisie rapide */
+.capture { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 12px; display: grid; gap: 10px; margin-bottom: 18px; }
+.capture textarea, .capture input[type="text"] { width: 100%; border: 0; background: transparent; resize: none; font-size: 1.05rem; padding: 4px 2px; outline: none; min-width: 0; }
+.capture textarea { min-height: 52px; }
+.capture-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.capture-row .spacer { flex: 1; }
+.field { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 6px 8px; font-size: .85rem; max-width: 100%; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 12px; font-weight: 600; font-size: .85rem; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--ink); background: var(--sunk); }
+.btn.danger { color: var(--danger); }
+.btn.danger.armed { background: var(--danger); color: var(--surface); border-color: var(--danger); }
+.btn.sm { padding: 4px 8px; font-size: .78rem; }
+.dots { display: flex; gap: 6px; }
+.dot { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); padding: 0; }
+.dot[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+/* Filtres */
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; font-size: .8rem; font-weight: 600; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip .sw { width: 9px; height: 9px; border-radius: 50%; background: var(--pc, var(--muted)); }
+.search { margin-left: auto; min-width: 0; width: 200px; }
+
+/* Mur de notes */
+.wall { columns: 260px; column-gap: 14px; }
+.note { break-inside: avoid; margin-bottom: 14px; border-radius: var(--r); padding: 12px 14px 10px; border: 1px solid var(--line); box-shadow: var(--shadow); display: grid; gap: 8px; background: var(--n-paper); }
+.note[data-c="sun"] { background: var(--n-sun); } .note[data-c="mint"] { background: var(--n-mint); }
+.note[data-c="sky"] { background: var(--n-sky); } .note[data-c="rose"] { background: var(--n-rose); }
+.note[data-c="sand"] { background: var(--n-sand); }
+.note-text { white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; min-height: 1.5em; }
+.note.pinned { border-color: var(--ink); }
+.note-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: .75rem; color: var(--muted); }
+.note-foot .when { margin-right: auto; font-variant-numeric: tabular-nums; }
+.icon-btn { border: 0; background: transparent; padding: 3px 6px; border-radius: 6px; color: var(--muted); font-size: .78rem; font-weight: 600; }
+.icon-btn:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
+.icon-btn.armed { background: var(--danger); color: var(--surface); }
+.edit-area { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--surface); resize: vertical; min-height: 80px; }
+.ptag { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 8px 1px 6px; font-size: .72rem; font-weight: 700; background: color-mix(in srgb, var(--pc) 16%, var(--surface)); color: color-mix(in srgb, var(--pc) 65%, var(--ink)); border: 1px solid color-mix(in srgb, var(--pc) 35%, transparent); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ptag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--pc); flex: none; }
+
+/* Projets */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.pcard { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 0; overflow: hidden; display: grid; box-shadow: var(--shadow); transition: transform .15s, border-color .15s; }
+.pcard:hover { border-color: var(--pc); transform: translateY(-1px); }
+.pcard .band { height: 6px; background: var(--pc); }
+.pcard .body { padding: 14px; display: grid; gap: 10px; }
+.pcard .row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pname { font-family: var(--pf); font-size: calc(var(--ps) * 1.25); font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; min-width: 0; }
+.pmeta { display: flex; gap: 12px; font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.badge { width: 40px; height: 40px; border-radius: 10px; background: var(--pc); color: #fff; display: grid; place-items: center; font-weight: 700; font-family: var(--f-display); flex: none; overflow: hidden; font-size: 15px; }
+.badge img { width: 100%; height: 100%; object-fit: cover; background: var(--surface); }
+.badge.lg { width: 64px; height: 64px; border-radius: 14px; font-size: 22px; }
+.badge.sm { width: 28px; height: 28px; border-radius: 7px; font-size: 11px; }
+.status { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.status[data-s="encours"] { color: var(--accent); border-color: var(--accent); }
+.status[data-s="pause"] { color: var(--warn); border-color: var(--warn); }
+.status[data-s="termine"] { color: var(--ok); border-color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, transparent); }
+.tools-mini { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.crumbs { display: flex; gap: 6px; align-items: center; font-size: .85rem; color: var(--muted); margin-bottom: 12px; flex-wrap: wrap; }
+.crumbs button { border: 0; background: none; color: var(--accent); font-weight: 600; padding: 0; }
+.phero { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 18px; }
+.phero .band { height: 10px; background: var(--pc); }
+.phero .inner { padding: 18px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.phero .titles { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.ptitle { font-family: var(--pf); font-size: calc(var(--ps) * 1.9); font-weight: 600; line-height: 1.15; margin: 0; overflow-wrap: anywhere; cursor: text; }
+.ptext { font-family: var(--pf); font-size: var(--ps); }
+.desc { white-space: pre-wrap; color: var(--ink); min-height: 1.5em; cursor: text; overflow-wrap: anywhere; }
+.desc.is-empty { color: var(--muted); font-style: italic; }
+.title-input { font-family: var(--pf); font-size: calc(var(--ps) * 1.6); font-weight: 600; width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; background: var(--bg); }
+.hero-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+.custom { border-top: 1px dashed var(--line); padding: 16px 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; background: var(--sunk); }
+.custom h4 { margin: 0 0 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.custom .swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.custom .swatches .dot { width: 26px; height: 26px; }
+input[type="color"] { width: 34px; height: 28px; border: 1px solid var(--line); border-radius: 6px; padding: 0; background: none; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.logo-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.file-btn { position: relative; overflow: hidden; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.cols { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 820px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.panel h3 { margin: 0; font-family: var(--f-display); font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.panel h3 .n { font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; font-family: var(--f-ui); }
+.inline-add { display: flex; gap: 8px; }
+.inline-add input { flex: 1; min-width: 0; }
+.sublist { display: grid; gap: 10px; }
+.subcard { display: grid; gap: 8px; border: 1px solid var(--line); border-left: 5px solid var(--pc); border-radius: 10px; padding: 10px 12px; background: var(--surface); text-align: left; width: 100%; }
+.subcard:hover { border-color: var(--pc); }
+.subcard .row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.subcard .pname { font-size: calc(var(--ps) * 1.1); flex: 1; }
+.empty-box { border: 1px dashed var(--line); border-radius: 10px; padding: 14px; color: var(--muted); font-size: .88rem; text-align: center; }
+
+.tool { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 3px 4px 3px 10px; font-size: .8rem; font-weight: 600; }
+.tool.mini { padding: 1px 8px; font-size: .72rem; }
+.tool i { width: 8px; height: 8px; border-radius: 2px; background: var(--tc, var(--muted)); flex: none; }
+.tool button { border: 0; background: none; color: var(--muted); padding: 0 4px; border-radius: 50%; line-height: 1; font-size: 1rem; }
+.tool button:hover { color: var(--danger); }
+.tool-list { display: flex; gap: 6px; flex-wrap: wrap; }
+.suggest { display: flex; gap: 6px; flex-wrap: wrap; }
+.suggest button { border: 1px dashed var(--line); background: transparent; border-radius: 999px; padding: 2px 9px; font-size: .75rem; color: var(--muted); }
+.suggest button:hover { border-style: solid; color: var(--ink); }
+
+/* To do */
+.tgroup { margin-bottom: 18px; }
+.tgroup h3 { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; display: flex; gap: 8px; align-items: center; }
+.tgroup h3[data-g="late"] { color: var(--danger); }
+.tlist { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.titem { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-top: 1px solid var(--line); }
+.titem:first-child { border-top: 0; }
+.titem input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--accent); flex: none; }
+.titem .tmain { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.titem .ttext { overflow-wrap: anywhere; cursor: text; }
+.titem.done .ttext { text-decoration: line-through; color: var(--muted); }
+.tmeta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: .75rem; }
+.due { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.due.late { color: var(--danger); } .due.today { color: var(--warn); }
+.prio { font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: 1px 7px; border-radius: 4px; }
+.prio[data-p="haute"] { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+.prio[data-p="basse"] { background: var(--sunk); color: var(--muted); }
+.tedit { display: flex; gap: 6px; flex-wrap: wrap; }
+.tedit input[type="text"] { flex: 1 1 200px; min-width: 0; }
+
+.empty { text-align: center; padding: 36px 16px; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; background: var(--surface); }
+.empty strong { display: block; color: var(--ink); font-family: var(--f-display); font-size: 1.05rem; margin-bottom: 4px; }
+.loading { color: var(--muted); padding: 30px 0; text-align: center; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: .88rem; z-index: 20; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+
+@media (max-width: 560px) {
+  .top .wrap { gap: 8px; }
+  nav.tabs { width: 100%; }
+  .tab { flex: 1; justify-content: center; padding: 6px 8px; }
+  .search { width: 100%; margin-left: 0; }
+  .sync span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><span class="brand-mark">✎</span>Carnet de projets</div>
+    <div class="sync" id="sync"><i></i><span>Connexion…</span></div>
+    <nav class="tabs" aria-label="Onglets">
+      <button class="tab" data-act="tab" data-v="notes" id="tab-notes">Notes <span class="count" id="c-notes">0</span></button>
+      <button class="tab" data-act="tab" data-v="projets" id="tab-projets">Projets <span class="count" id="c-projets">0</span></button>
+      <button class="tab" data-act="tab" data-v="todo" id="tab-todo">To do <span class="count" id="c-todo">0</span></button>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="main"><div class="loading">Chargement de ton carnet…</div></main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Constantes ---------- */
+const FONTS = [
+  { id: 'Manrope', css: "'Manrope', system-ui, sans-serif" },
+  { id: 'Space Grotesk', css: "'Space Grotesk', system-ui, sans-serif" },
+  { id: 'Poppins', css: "'Poppins', system-ui, sans-serif" },
+  { id: 'Aptos Narrow', css: "'Aptos Narrow', 'Arial Narrow', sans-serif" },
+  { id: 'Playfair Display', css: "'Playfair Display', Georgia, serif" },
+  { id: 'Lora', css: "'Lora', Georgia, serif" },
+  { id: 'Merriweather', css: "'Merriweather', Georgia, serif" },
+  { id: 'Caveat', css: "'Caveat', 'Comic Sans MS', cursive" },
+  { id: 'Bebas Neue', css: "'Bebas Neue', Impact, sans-serif" },
+  { id: 'JetBrains Mono', css: "'JetBrains Mono', Consolas, monospace" },
+];
+const SWATCHES = ['#1F6F5C', '#2F6FA8', '#6A4BC4', '#C2410C', '#BE185D', '#A16207', '#0E7490', '#475569'];
+const NOTE_COLORS = [['paper', 'Blanc'], ['sun', 'Jaune'], ['mint', 'Vert'], ['sky', 'Bleu'], ['rose', 'Rose'], ['sand', 'Sable']];
+const STATUSES = [['idee', 'Idée'], ['encours', 'En cours'], ['pause', 'En pause'], ['termine', 'Terminé']];
+const TOOLS = {
+  'Claude Code': '#D97757', 'Claude': '#D97757', 'ChatGPT': '#10A37F', 'Excel': '#1D6F42', 'Google Sheets': '#188038',
+  'Word': '#2B579A', 'PowerPoint': '#C43E1C', 'Outlook': '#0F6CBD', 'Power BI': '#E8B100', 'CapCut': '#6B7280',
+  'Canva': '#00A3BF', 'TikTok': '#EE1D52', 'Premiere Pro': '#9999FF', 'Notion': '#6B7280', 'Figma': '#A259FF',
+  'VS Code': '#007ACC', 'GitHub': '#6B7280', 'Pennylane': '#2F6FA8', 'Google Docs': '#4285F4',
+};
+const TOOL_SUGGEST = ['Claude Code', 'Excel', 'Google Sheets', 'CapCut', 'Canva', 'Word', 'PowerPoint', 'Notion', 'ChatGPT', 'Power BI', 'GitHub', 'TikTok'];
+const PRIOS = [['haute', 'Haute'], ['normale', 'Normale'], ['basse', 'Basse']];
+const COLS = ['notes', 'projects', 'todos'];
+
+/* ---------- État ---------- */
+const S = {
+  data: { notes: [], projects: [], todos: [] },
+  loaded: { notes: false, projects: false, todos: false },
+  view: 'notes', openId: '', custom: false,
+  noteFilter: 'all', noteSearch: '', todoFilter: 'open', todoProj: '',
+  draft: { note: '', noteColor: 'sun', noteProj: '', proj: '', sub: '', tool: '', todo: '', todoProj: '', todoDue: '', todoPrio: 'normale', ptodo: '' },
+  edit: null, editText: '', editExtra: {},
+  confirm: '', mode: 'local', readOnly: false,
+};
+
+/* ---------- Utilitaires ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = (p) => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const safeColor = (c) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c : '#1F6F5C');
+const fontOf = (f) => (FONTS.find((x) => x.id === f) || FONTS[0]);
+const clampSize = (n) => Math.min(28, Math.max(12, Number(n) || 15));
+const safeLogo = (l) => (typeof l === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(l) ? l : '');
+const initials = (n) => (String(n || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?');
+const pad = (n) => String(n).padStart(2, '0');
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const addDays = (iso, n) => { const d = new Date(iso + 'T00:00'); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const fmtDue = (iso) => new Date(iso + 'T00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+const fmtWhen = (ms) => {
+  if (!ms) return '';
+  const d = new Date(ms), now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  return sameDay ? 'aujourd’hui ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+};
+const pStyle = (p) => `--pc:${safeColor(p && p.color)};--pf:${fontOf(p && p.font).css};--ps:${clampSize(p && p.size)}px`;
+
+const projects = () => S.data.projects;
+const byId = (id) => projects().find((p) => p.id === id);
+const tops = () => projects().filter((p) => !p.parentId || !byId(p.parentId)).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+const subsOf = (id) => projects().filter((p) => p.parentId === id).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+const familyIds = (id) => [id, ...subsOf(id).map((s) => s.id)];
+
+function badge(p, cls = '') {
+  const logo = safeLogo(p.logo);
+  return `<span class="badge ${cls}" style="${pStyle(p)}">${logo ? `<img src="${logo}" alt="">` : esc(initials(p.name))}</span>`;
+}
+function ptag(id) {
+  const p = byId(id);
+  if (!p) return '';
+  const par = p.parentId && byId(p.parentId);
+  const label = par ? `${par.name} › ${p.name}` : p.name;
+  return `<span class="ptag" style="--pc:${safeColor(p.color)}" title="${esc(label)}">${esc(label)}</span>`;
+}
+function projOptions(sel, emptyLabel = 'Sans projet') {
+  let h = `<option value="">${esc(emptyLabel)}</option>`;
+  for (const p of tops()) {
+    h += `<option value="${esc(p.id)}"${p.id === sel ? ' selected' : ''}>${esc(p.name)}</option>`;
+    for (const s of subsOf(p.id)) h += `<option value="${esc(s.id)}"${s.id === sel ? ' selected' : ''}>   ↳ ${esc(s.name)}</option>`;
+  }
+  return h;
+}
+function toolChip(name, removable, pid) {
+  const c = TOOLS[name] || '#6B7280';
+  return `<span class="tool${removable ? '' : ' mini'}" style="--tc:${c}"><i></i>${esc(name)}${removable ? `<button data-act="tool-del" data-id="${esc(pid)}" data-v="${esc(name)}" aria-label="Retirer ${esc(name)}">×</button>` : ''}</span>`;
+}
+function delBtn(key, cls = 'icon-btn', label = 'Supprimer') {
+  const armed = S.confirm === key;
+  return `<button class="${cls}${armed ? ' armed' : ''}" data-act="del" data-key="${esc(key)}">${armed ? 'Confirmer ?' : label}</button>`;
+}
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3200); }
+
+/* ---------- Stockage : base partagée (sync PC ⇄ téléphone) ou navigateur ---------- */
+const LS_KEY = 'carnet-projets-v1';
+let db = null;
+function lsLoad() { try { const r = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (r) for (const c of COLS) S.data[c] = Array.isArray(r[c]) ? r[c] : []; } catch (e) {} }
+function lsSave() { try { localStorage.setItem(LS_KEY, JSON.stringify(S.data)); } catch (e) {} }
+
+function onWriteError(e) {
+  const code = e && e.code;
+  if (code === 'invalid_argument') { S.readOnly = true; toast('Ce carnet est en lecture seule pour toi.'); }
+  else if (code === 'quota_exceeded') toast('Le carnet est plein : supprime des éléments anciens.');
+  else toast('Enregistrement impossible pour le moment. Réessaie.');
+}
+async function put(col, id, data) {
+  if (db) { try { await db.collection(col).doc(id).set(data); } catch (e) { onWriteError(e); } return; }
+  const arr = S.data[col]; const i = arr.findIndex((x) => x.id === id);
+  if (i >= 0) arr[i] = { id, ...data }; else arr.push({ id, ...data });
+  lsSave(); render();
+}
+async function patch(col, id, part) {
+  if (db) { try { await db.collection(col).doc(id).update(part); } catch (e) { onWriteError(e); } return; }
+  const it = S.data[col].find((x) => x.id === id); if (it) Object.assign(it, part);
+  lsSave(); render();
+}
+async function remove(col, id) {
+  if (db) { try { await db.collection(col).doc(id).delete(); } catch (e) { onWriteError(e); } return; }
+  S.data[col] = S.data[col].filter((x) => x.id !== id);
+  lsSave(); render();
+}
+const strip = (o) => { const { id, ...rest } = o; return rest; };
+
+function setSync(on, text) { const el = $('#sync'); el.classList.toggle('on', on); el.querySelector('span').textContent = text; }
+
+async function boot() {
+  route();
+  let d = null;
+  try { d = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { d = null; }
+  if (!d) {
+    S.mode = 'local'; lsLoad(); COLS.forEach((c) => { S.loaded[c] = true; });
+    setSync(false, 'Enregistré sur cet appareil');
+    render(); return;
+  }
+  db = d; S.mode = 'db';
+  const timer = setTimeout(() => { setSync(false, 'Hors ligne : données peut-être pas à jour'); COLS.forEach((c) => { S.loaded[c] = true; }); render(); }, 10000);
+  for (const c of COLS) {
+    db.collection(c).onSnapshot((snap) => {
+      S.data[c] = snap.docs.map((x) => ({ id: x.id, ...x.data() }));
+      S.loaded[c] = true;
+      if (!snap.metadata.fromCache) { clearTimeout(timer); setSync(true, 'Synchronisé'); }
+      render();
+    }, () => { clearTimeout(timer); S.loaded[c] = true; setSync(false, 'Synchronisation interrompue'); render(); });
+  }
+}
+
+/* ---------- Routage ---------- */
+function route() {
+  const h = location.hash.replace('#', '');
+  S.view = ['notes', 'projets', 'todo'].includes(h) ? h : 'notes';
+  if (S.view !== 'projets') S.openId = '';
+}
+window.addEventListener('hashchange', () => { route(); S.edit = null; render(); });
+
+/* ---------- Rendu ---------- */
+let rendering = false;
+function render() {
+  rendering = true;
+  const a = document.activeElement;
+  const focus = a && a.id ? { id: a.id, s: a.selectionStart, e: a.selectionEnd } : null;
+
+  for (const v of ['notes', 'projets', 'todo']) $('#tab-' + v).setAttribute('aria-current', S.view === v ? 'page' : 'false');
+  $('#c-notes').textContent = S.data.notes.length;
+  $('#c-projets').textContent = tops().length;
+  $('#c-todo').textContent = S.data.todos.filter((t) => !t.done).length;
+
+  const ready = COLS.every((c) => S.loaded[c]);
+  $('#main').innerHTML = !ready ? '<div class="loading">Chargement de ton carnet…</div>'
+    : S.view === 'notes' ? viewNotes() : S.view === 'projets' ? viewProjects() : viewTodo();
+
+  if (focus) {
+    const el = document.getElementById(focus.id);
+    if (el) { el.focus({ preventScroll: true }); try { if (focus.s != null) el.setSelectionRange(focus.s, focus.e); } catch (e) {} }
+  }
+  rendering = false;
+}
+
+/* --- Notes --- */
+function viewNotes() {
+  const d = S.draft;
+  const q = S.noteSearch.trim().toLowerCase();
+  let notes = S.data.notes.slice();
+  if (S.noteFilter === 'none') notes = notes.filter((n) => !n.projectId || !byId(n.projectId));
+  else if (S.noteFilter !== 'all') { const fam = familyIds(S.noteFilter); notes = notes.filter((n) => fam.includes(n.projectId)); }
+  if (q) notes = notes.filter((n) => String(n.text || '').toLowerCase().includes(q));
+  notes.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (b.createdAt || 0) - (a.createdAt || 0));
+
+  const chips = [`<button class="chip" data-act="nfilter" data-v="all" aria-pressed="${S.noteFilter === 'all'}">Toutes</button>`,
+    `<button class="chip" data-act="nfilter" data-v="none" aria-pressed="${S.noteFilter === 'none'}">Sans projet</button>`,
+    ...tops().map((p) => `<button class="chip" data-act="nfilter" data-v="${esc(p.id)}" aria-pressed="${S.noteFilter === p.id}" style="--pc:${safeColor(p.color)}"><span class="sw"></span>${esc(p.name)}</button>`)].join('');
+
+  return `
+  <div class="view-head"><h1 class="view-title">Notes</h1><span class="hint">Écris l’idée, appuie sur Entrée. Tu la rangeras plus tard.</span></div>
+  <div class="capture">
+    <textarea id="in-note" data-draft="note" placeholder="Une idée qui passe par la tête…" aria-label="Nouvelle note">${esc(d.note)}</textarea>
+    <div class="capture-row">
+      <div class="dots" role="group" aria-label="Couleur">${NOTE_COLORS.map(([k, l]) => `<button class="dot note-dot" data-act="ncolor" data-v="${k}" aria-pressed="${d.noteColor === k}" title="${l}" style="background:var(--n-${k})"></button>`).join('')}</div>
+      <select class="field" id="in-note-proj" data-draft="noteProj" aria-label="Projet">${projOptions(d.noteProj)}</select>
+      <span class="spacer"></span>
+      <button class="btn primary" data-act="note-add">Ajouter la note</button>
+    </div>
+  </div>
+  <div class="filters">${chips}<input class="field search" id="in-nsearch" data-draft="__nsearch" type="search" placeholder="Rechercher…" value="${esc(S.noteSearch)}" aria-label="Rechercher dans les notes"></div>
+  ${notes.length ? `<div class="wall">${notes.map(noteCard).join('')}</div>`
+    : `<div class="empty"><strong>${S.data.notes.length ? 'Aucune note ici' : 'Ton mur d’idées est vide'}</strong>${S.data.notes.length ? 'Change de filtre ou de recherche.' : 'Tape ta première idée dans le champ ci-dessus et appuie sur Entrée.'}</div>`}`;
+}
+function noteCard(n) {
+  const editing = S.edit && S.edit.col === 'notes' && S.edit.id === n.id;
+  const c = NOTE_COLORS.some(([k]) => k === n.color) ? n.color : 'paper';
+  if (editing) {
+    const x = S.editExtra;
+    return `<article class="note" data-c="${esc(x.color || c)}">
+      <textarea class="edit-area" id="ed-${esc(n.id)}" data-edit>${esc(S.editText)}</textarea>
+      <div class="capture-row">
+        <div class="dots">${NOTE_COLORS.map(([k, l]) => `<button class="dot" data-act="ed-color" data-v="${k}" aria-pressed="${(x.color || c) === k}" title="${l}" style="background:var(--n-${k})"></button>`).join('')}</div>
+        <select class="field" id="ed-proj-${esc(n.id)}" data-extra="projectId" aria-label="Projet">${projOptions(x.projectId ?? n.projectId)}</select>
+      </div>
+      <div class="capture-row"><span class="spacer"></span><button class="btn ghost sm" data-act="ed-cancel">Annuler</button><button class="btn primary sm" data-act="ed-save">Enregistrer</button></div>
+    </article>`;
+  }
+  return `<article class="note${n.pinned ? ' pinned' : ''}" data-c="${esc(c)}">
+    <div class="note-text" data-act="ed-start" data-col="notes" data-id="${esc(n.id)}" title="Cliquer pour modifier">${esc(n.text)}</div>
+    ${n.projectId && byId(n.projectId) ? `<div>${ptag(n.projectId)}</div>` : ''}
+    <div class="note-foot">
+      <span class="when">${n.pinned ? '📌 ' : ''}${esc(fmtWhen(n.createdAt))}</span>
+      <button class="icon-btn" data-act="note-pin" data-id="${esc(n.id)}">${n.pinned ? 'Détacher' : 'Épingler'}</button>
+      <button class="icon-btn" data-act="note-todo" data-id="${esc(n.id)}" title="Créer une tâche à partir de cette note">→ To do</button>
+      ${delBtn('notes:' + n.id)}
+    </div>
+  </article>`;
+}
+
+/* --- Projets --- */
+function viewProjects() {
+  const p = S.openId && byId(S.openId);
+  if (p) return viewProject(p);
+  const list = tops();
+  return `
+  <div class="view-head"><h1 class="view-title">Projets</h1><span class="hint">Un projet, ses sous-projets, ses outils et son style.</span></div>
+  <div class="capture"><div class="capture-row">
+    <input type="text" id="in-proj" data-draft="proj" placeholder="Nom du nouveau projet (ex. Applications, Vidéo TikTok…)" value="${esc(S.draft.proj)}" aria-label="Nouveau projet" style="flex:1">
+    <button class="btn primary" data-act="proj-add">Créer le projet</button>
+  </div></div>
+  ${list.length ? `<div class="pgrid">${list.map(projCard).join('')}</div>`
+    : `<div class="empty"><strong>Aucun projet pour l’instant</strong>Crée ton premier projet ci-dessus, puis ajoute-lui des sous-projets.</div>`}`;
+}
+function counts(id) {
+  const fam = familyIds(id);
+  return {
+    subs: subsOf(id).length,
+    notes: S.data.notes.filter((n) => fam.includes(n.projectId)).length,
+    open: S.data.todos.filter((t) => fam.includes(t.projectId) && !t.done).length,
+  };
+}
+function toolsOf(id) {
+  const set = new Set();
+  for (const pid of familyIds(id)) for (const t of (byId(pid) || {}).tools || []) set.add(t);
+  return [...set];
+}
+function statusPill(p) {
+  const s = STATUSES.find(([k]) => k === p.status) || STATUSES[0];
+  return `<span class="status" data-s="${s[0]}">${s[1]}</span>`;
+}
+function projCard(p) {
+  const c = counts(p.id), tools = toolsOf(p.id);
+  return `<button class="pcard" data-act="open" data-id="${esc(p.id)}" style="${pStyle(p)}">
+    <div class="band"></div>
+    <div class="body">
+      <div class="row">${badge(p)}<span class="pname">${esc(p.name)}</span></div>
+      <div class="pmeta"><span>${c.subs} sous-projet${c.subs > 1 ? 's' : ''}</span><span>${c.open} tâche${c.open > 1 ? 's' : ''}</span><span>${c.notes} note${c.notes > 1 ? 's' : ''}</span></div>
+      <div class="row" style="justify-content:space-between">${tools.length ? `<div class="tools-mini">${tools.slice(0, 5).map((t) => toolChip(t)).join('')}${tools.length > 5 ? `<span class="hint">+${tools.length - 5}</span>` : ''}</div>` : '<span></span>'}${statusPill(p)}</div>
+    </div>
+  </button>`;
+}
+function viewProject(p) {
+  const parent = p.parentId && byId(p.parentId);
+  const isSub = !!parent;
+  const subs = isSub ? [] : subsOf(p.id);
+  const fam = isSub ? [p.id] : familyIds(p.id);
+  const notes = S.data.notes.filter((n) => fam.includes(n.projectId)).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const todos = S.data.todos.filter((t) => fam.includes(t.projectId)).sort(todoSort);
+  const editingName = S.edit && S.edit.col === 'projects' && S.edit.id === p.id && S.edit.field === 'name';
+  const editingDesc = S.edit && S.edit.col === 'projects' && S.edit.id === p.id && S.edit.field === 'description';
+
+  const crumbs = `<nav class="crumbs"><button data-act="open" data-id="">Projets</button>${parent ? `<span>›</span><button data-act="open" data-id="${esc(parent.id)}">${esc(parent.name)}</button>` : ''}<span>›</span><span>${esc(p.name)}</span></nav>`;
+
+  const hero = `<section class="phero" id="phero" style="${pStyle(p)}">
+    <div class="band"></div>
+    <div class="inner">
+      ${badge(p, 'lg')}
+      <div class="titles">
+        ${isSub ? `<span class="hint">Sous-projet de ${esc(parent.name)}</span>` : ''}
+        ${editingName ? `<input class="title-input" id="ed-name" data-edit value="${esc(S.editText)}" aria-label="Nom">`
+          : `<h2 class="ptitle" data-act="ed-start" data-col="projects" data-id="${esc(p.id)}" data-field="name" title="Cliquer pour renommer">${esc(p.name)}</h2>`}
+        ${editingDesc ? `<textarea class="edit-area ptext" id="ed-desc" data-edit placeholder="Objectif, contexte, liens…">${esc(S.editText)}</textarea>`
+          : `<div class="desc ptext${p.description ? '' : ' is-empty'}" data-act="ed-start" data-col="projects" data-id="${esc(p.id)}" data-field="description">${p.description ? esc(p.description) : 'Ajouter une description…'}</div>`}
+      </div>
+      <div class="hero-actions">
+        <select class="field" id="st-${esc(p.id)}" data-act-change="status" data-id="${esc(p.id)}" aria-label="Statut">${STATUSES.map(([k, l]) => `<option value="${k}"${(p.status || 'idee') === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <button class="btn" data-act="custom" aria-expanded="${S.custom}">🎨 Personnaliser</button>
+      </div>
+    </div>
+    ${S.custom ? customPanel(p) : ''}
+  </section>`;
+
+  const toolsPanel = `<section class="panel">
+    <h3>Outils à utiliser <span class="n">${(p.tools || []).length}</span></h3>
+    ${(p.tools || []).length ? `<div class="tool-list">${p.tools.map((t) => toolChip(t, true, p.id)).join('')}</div>` : '<div class="empty-box">Liste les outils dont tu auras besoin : Claude Code, Excel, CapCut…</div>'}
+    <div class="inline-add">
+      <input class="field" type="text" id="in-tool" data-draft="tool" list="tool-list" placeholder="Ajouter un outil…" value="${esc(S.draft.tool)}" aria-label="Nouvel outil">
+      <button class="btn" data-act="tool-add" data-id="${esc(p.id)}">Ajouter</button>
+    </div>
+    <datalist id="tool-list">${Object.keys(TOOLS).map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+    <div class="suggest">${TOOL_SUGGEST.filter((t) => !(p.tools || []).includes(t)).slice(0, 8).map((t) => `<button data-act="tool-quick" data-id="${esc(p.id)}" data-v="${esc(t)}">+ ${esc(t)}</button>`).join('')}</div>
+  </section>`;
+
+  const subsPanel = isSub ? '' : `<section class="panel">
+    <h3>Sous-projets <span class="n">${subs.length}</span></h3>
+    <div class="inline-add">
+      <input class="field" type="text" id="in-sub" data-draft="sub" placeholder="Nom du sous-projet…" value="${esc(S.draft.sub)}" aria-label="Nouveau sous-projet">
+      <button class="btn primary" data-act="sub-add" data-id="${esc(p.id)}">Ajouter</button>
+    </div>
+    ${subs.length ? `<div class="sublist">${subs.map(subCard).join('')}</div>` : '<div class="empty-box">Découpe ce projet en sous-projets : chacun a ses outils et son propre style.</div>'}
+  </section>`;
+
+  const todoPanel = `<section class="panel">
+    <h3>Tâches <span class="n">${todos.filter((t) => !t.done).length} à faire</span></h3>
+    <div class="inline-add">
+      <input class="field" type="text" id="in-ptodo" data-draft="ptodo" placeholder="Nouvelle tâche pour ${esc(p.name)}…" value="${esc(S.draft.ptodo)}" aria-label="Nouvelle tâche">
+      <button class="btn" data-act="ptodo-add" data-id="${esc(p.id)}">Ajouter</button>
+    </div>
+    ${todos.length ? `<div class="tlist">${todos.map((t) => todoItem(t, !isSub)).join('')}</div>` : '<div class="empty-box">Aucune tâche liée.</div>'}
+  </section>`;
+
+  const notesPanel = `<section class="panel">
+    <h3>Notes liées <span class="n">${notes.length}</span></h3>
+    ${notes.length ? notes.slice(0, 12).map((n) => `<div class="note" data-c="${esc(n.color || 'paper')}" style="margin:0"><div class="note-text">${esc(n.text)}</div>${!isSub && n.projectId !== p.id ? `<div>${ptag(n.projectId)}</div>` : ''}</div>`).join('') : '<div class="empty-box">Range des notes ici depuis l’onglet Notes.</div>'}
+  </section>`;
+
+  return `${crumbs}${hero}
+  <div class="cols">
+    <div style="display:grid;gap:18px;min-width:0">${isSub ? toolsPanel : subsPanel}${todoPanel}</div>
+    <div style="display:grid;gap:18px;min-width:0">${isSub ? '' : toolsPanel}${notesPanel}</div>
+  </div>`;
+}
+function subCard(s) {
+  const c = counts(s.id);
+  return `<button class="subcard" data-act="open" data-id="${esc(s.id)}" style="${pStyle(s)}">
+    <div class="row">${badge(s, 'sm')}<span class="pname">${esc(s.name)}</span>${statusPill(s)}</div>
+    ${(s.tools || []).length ? `<div class="tools-mini">${s.tools.map((t) => toolChip(t)).join('')}</div>` : '<span class="hint">Aucun outil défini</span>'}
+    <div class="pmeta"><span>${c.open} tâche${c.open > 1 ? 's' : ''}</span><span>${c.notes} note${c.notes > 1 ? 's' : ''}</span></div>
+  </button>`;
+}
+function customPanel(p) {
+  const color = safeColor(p.color), logo = safeLogo(p.logo);
+  return `<div class="custom">
+    <div><h4>Couleur</h4><div class="swatches">
+      ${SWATCHES.map((c) => `<button class="dot" data-act="set-color" data-id="${esc(p.id)}" data-v="${c}" style="background:${c}" aria-pressed="${color.toLowerCase() === c.toLowerCase()}" aria-label="Couleur ${c}"></button>`).join('')}
+      <input type="color" id="cl-${esc(p.id)}" data-act-change="color" data-id="${esc(p.id)}" value="${color}" aria-label="Couleur personnalisée">
+    </div></div>
+    <div><h4>Police</h4>
+      <select class="field" id="ft-${esc(p.id)}" data-act-change="font" data-id="${esc(p.id)}" style="width:100%;font-family:${fontOf(p.font).css}" aria-label="Police">
+        ${FONTS.map((f) => `<option value="${esc(f.id)}"${fontOf(p.font).id === f.id ? ' selected' : ''} style="font-family:${f.css}">${esc(f.id)}</option>`).join('')}
+      </select></div>
+    <div><h4>Taille de l’écriture · <span id="sz-out">${clampSize(p.size)} px</span></h4>
+      <input type="range" min="12" max="28" step="1" id="sz-${esc(p.id)}" data-act-change="size" data-id="${esc(p.id)}" value="${clampSize(p.size)}" aria-label="Taille de l’écriture"></div>
+    <div><h4>Logo</h4><div class="logo-row">
+      ${badge(p)}
+      <span class="btn file-btn">${logo ? 'Changer' : 'Importer une image'}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-logo="${esc(p.id)}" aria-label="Importer un logo"></span>
+      ${logo ? `<button class="btn ghost" data-act="logo-del" data-id="${esc(p.id)}">Retirer</button>` : ''}
+    </div></div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end">${delBtn('projects:' + p.id, 'btn danger', p.parentId ? 'Supprimer ce sous-projet' : 'Supprimer le projet et ses sous-projets')}</div>
+  </div>`;
+}
+
+/* --- To do --- */
+const PRIO_RANK = { haute: 0, normale: 1, basse: 2 };
+function todoSort(a, b) {
+  return (a.done ? 1 : 0) - (b.done ? 1 : 0) || (a.due || '9999') .localeCompare(b.due || '9999') || (PRIO_RANK[a.priority] ?? 1) - (PRIO_RANK[b.priority] ?? 1) || (a.createdAt || 0) - (b.createdAt || 0);
+}
+function dueGroup(t) {
+  if (t.done) return 'done';
+  if (!t.due) return 'none';
+  const td = todayISO();
+  if (t.due < td) return 'late'; if (t.due === td) return 'today'; if (t.due <= addDays(td, 7)) return 'week'; return 'later';
+}
+function todoItem(t, showProj = true) {
+  const editing = S.edit && S.edit.col === 'todos' && S.edit.id === t.id;
+  if (editing) {
+    const x = S.editExtra;
+    return `<div class="titem"><div class="tmain"><div class="tedit">
+      <input class="field" type="text" id="ed-t-${esc(t.id)}" data-edit value="${esc(S.editText)}" aria-label="Tâche">
+      <select class="field" id="ed-tp-${esc(t.id)}" data-extra="projectId" aria-label="Projet">${projOptions(x.projectId ?? t.projectId)}</select>
+      <input class="field" type="date" id="ed-td-${esc(t.id)}" data-extra="due" value="${esc(x.due ?? t.due ?? '')}" aria-label="Échéance">
+      <select class="field" id="ed-tr-${esc(t.id)}" data-extra="priority" aria-label="Priorité">${PRIOS.map(([k, l]) => `<option value="${k}"${(x.priority ?? t.priority ?? 'normale') === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <button class="btn ghost sm" data-act="ed-cancel">Annuler</button><button class="btn primary sm" data-act="ed-save">OK</button>
+    </div></div></div>`;
+  }
+  const g = dueGroup(t);
+  return `<div class="titem${t.done ? ' done' : ''}">
+    <input type="checkbox" data-act="todo-toggle" data-id="${esc(t.id)}" ${t.done ? 'checked' : ''} aria-label="Terminée">
+    <div class="tmain">
+      <div class="ttext" data-act="ed-start" data-col="todos" data-id="${esc(t.id)}" title="Cliquer pour modifier">${esc(t.text)}</div>
+      <div class="tmeta">
+        ${t.due ? `<span class="due ${g === 'late' ? 'late' : g === 'today' ? 'today' : ''}">${g === 'today' ? 'Aujourd’hui' : esc(fmtDue(t.due))}</span>` : ''}
+        ${t.priority && t.priority !== 'normale' ? `<span class="prio" data-p="${esc(t.priority)}">${t.priority === 'haute' ? 'Haute' : 'Basse'}</span>` : ''}
+        ${showProj && t.projectId && byId(t.projectId) ? ptag(t.projectId) : ''}
+      </div>
+    </div>
+    ${delBtn('todos:' + t.id)}
+  </div>`;
+}
+function viewTodo() {
+  const d = S.draft;
+  let todos = S.data.todos.slice();
+  if (S.todoProj) { const p = byId(S.todoProj); const fam = p && !p.parentId ? familyIds(p.id) : [S.todoProj]; todos = todos.filter((t) => fam.includes(t.projectId)); }
+  if (S.todoFilter === 'open') todos = todos.filter((t) => !t.done);
+  if (S.todoFilter === 'done') todos = todos.filter((t) => t.done);
+  todos.sort(todoSort);
+  const GROUPS = [['late', 'En retard'], ['today', 'Aujourd’hui'], ['week', 'Cette semaine'], ['later', 'Plus tard'], ['none', 'Sans échéance'], ['done', 'Terminées']];
+  const body = GROUPS.map(([g, label]) => {
+    const items = todos.filter((t) => dueGroup(t) === g);
+    if (!items.length) return '';
+    return `<section class="tgroup"><h3 data-g="${g}">${label} <span>${items.length}</span></h3><div class="tlist">${items.map((t) => todoItem(t)).join('')}</div></section>`;
+  }).join('');
+  const fbtn = (v, l) => `<button class="chip" data-act="tfilter" data-v="${v}" aria-pressed="${S.todoFilter === v}">${l}</button>`;
+  return `
+  <div class="view-head"><h1 class="view-title">To do</h1><span class="hint">${S.data.todos.filter((t) => !t.done).length} tâche(s) à faire</span></div>
+  <div class="capture">
+    <input type="text" id="in-todo" data-draft="todo" placeholder="Que faut-il faire ?" value="${esc(d.todo)}" aria-label="Nouvelle tâche">
+    <div class="capture-row">
+      <select class="field" id="in-todo-proj" data-draft="todoProj" aria-label="Projet">${projOptions(d.todoProj)}</select>
+      <input class="field" type="date" id="in-todo-due" data-draft="todoDue" value="${esc(d.todoDue)}" aria-label="Échéance">
+      <select class="field" id="in-todo-prio" data-draft="todoPrio" aria-label="Priorité">${PRIOS.map(([k, l]) => `<option value="${k}"${d.todoPrio === k ? ' selected' : ''}>Priorité ${l.toLowerCase()}</option>`).join('')}</select>
+      <span class="spacer"></span>
+      <button class="btn primary" data-act="todo-add">Ajouter la tâche</button>
+    </div>
+  </div>
+  <div class="filters">${fbtn('open', 'À faire')}${fbtn('done', 'Terminées')}${fbtn('all', 'Toutes')}
+    <select class="field" id="in-todo-filter" data-draft="__tproj" style="margin-left:auto" aria-label="Filtrer par projet">${projOptions(S.todoProj, 'Tous les projets')}</select>
+  </div>
+  ${body || `<div class="empty"><strong>${S.data.todos.length ? 'Rien dans ce filtre' : 'Aucune tâche'}</strong>${S.data.todos.length ? 'Change de filtre pour voir les autres tâches.' : 'Ajoute ta première tâche ci-dessus, avec une échéance si besoin.'}</div>`}`;
+}
+
+/* ---------- Actions ---------- */
+async function addNote() {
+  const text = S.draft.note.trim(); if (!text) return;
+  S.draft.note = '';
+  const el = $('#in-note'); if (el) el.value = '';
+  await put('notes', uid('n'), { text, color: S.draft.noteColor, projectId: S.draft.noteProj, pinned: false, createdAt: Date.now() });
+}
+async function addProject(name, parentId = '') {
+  name = name.trim(); if (!name) return;
+  const parent = parentId && byId(parentId);
+  const id = uid('p');
+  await put('projects', id, {
+    name, parentId, description: '', status: 'idee', tools: [],
+    color: parent ? safeColor(parent.color) : SWATCHES[tops().length % SWATCHES.length],
+    font: parent ? fontOf(parent.font).id : 'Manrope', size: parent ? clampSize(parent.size) : 15, logo: '', createdAt: Date.now(),
+  });
+  return id;
+}
+async function addTodo(text, projectId, due, priority) {
+  text = text.trim(); if (!text) return;
+  await put('todos', uid('t'), { text, projectId: projectId || '', due: due || '', priority: priority || 'normale', done: false, createdAt: Date.now() });
+}
+async function addTool(pid, name) {
+  name = String(name || '').trim().slice(0, 40); const p = byId(pid); if (!name || !p) return;
+  const tools = (p.tools || []).slice();
+  if (tools.some((t) => t.toLowerCase() === name.toLowerCase())) return;
+  tools.push(name);
+  await patch('projects', pid, { tools });
+}
+function startEdit(col, id, field = 'text') {
+  const it = S.data[col].find((x) => x.id === id); if (!it) return;
+  S.edit = { col, id, field }; S.editText = it[field] || ''; S.editExtra = {};
+  render();
+  const el = document.querySelector('[data-edit]');
+  if (el) { el.focus(); const n = el.value.length; try { el.setSelectionRange(n, n); } catch (e) {} }
+}
+async function saveEdit() {
+  const e = S.edit; if (!e) return;
+  const it = S.data[e.col].find((x) => x.id === e.id);
+  S.edit = null;
+  if (!it) { render(); return; }
+  const text = S.editText.trim();
+  const part = { ...S.editExtra };
+  if (e.field === 'name' && !text) { render(); return; }
+  if (e.col !== 'projects' && !text) { render(); return; }
+  if (text !== (it[e.field] || '')) part[e.field] = text;
+  for (const k of Object.keys(part)) if (part[k] === (it[k] ?? '')) delete part[k];
+  render();
+  if (Object.keys(part).length) await patch(e.col, e.id, part);
+}
+function cancelEdit() { S.edit = null; render(); }
+
+async function doDelete(key) {
+  const [col, id] = key.split(':');
+  if (col === 'projects') {
+    const p = byId(id);
+    const ids = p && !p.parentId ? familyIds(id) : [id];
+    if (ids.includes(S.openId)) { S.openId = p && p.parentId && byId(p.parentId) ? p.parentId : ''; S.custom = false; }
+    for (const n of S.data.notes.filter((n) => ids.includes(n.projectId))) await patch('notes', n.id, { projectId: '' });
+    for (const t of S.data.todos.filter((t) => ids.includes(t.projectId))) await patch('todos', t.id, { projectId: '' });
+    for (const pid of ids) await remove('projects', pid);
+    render();
+    return;
+  }
+  await remove(col, id);
+}
+
+function readLogo(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onerror = rej;
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = rej;
+      img.onload = () => {
+        const max = 160, r = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.width * r)); c.height = Math.max(1, Math.round(img.height * r));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/png'));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+/* ---------- Événements ---------- */
+let confirmT;
+document.addEventListener('click', async (ev) => {
+  const el = ev.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id, v = el.dataset.v;
+  if (act !== 'del' && S.confirm) { S.confirm = ''; }
+  switch (act) {
+    case 'tab': if (location.hash !== '#' + v) location.hash = v; else { S.openId = ''; render(); } break;
+    case 'nfilter': S.noteFilter = v; render(); break;
+    case 'tfilter': S.todoFilter = v; render(); break;
+    case 'ncolor': S.draft.noteColor = v; render(); break;
+    case 'note-add': await addNote(); $('#in-note')?.focus(); break;
+    case 'note-pin': { const n = S.data.notes.find((x) => x.id === id); if (n) await patch('notes', id, { pinned: !n.pinned }); break; }
+    case 'note-todo': { const n = S.data.notes.find((x) => x.id === id); if (n) { await addTodo(n.text.split('\n')[0].slice(0, 200), n.projectId); toast('Tâche ajoutée dans To do'); } break; }
+    case 'ed-start': if (!S.edit || S.edit.id !== id) startEdit(el.dataset.col, id, el.dataset.field || 'text'); break;
+    case 'ed-save': await saveEdit(); break;
+    case 'ed-cancel': cancelEdit(); break;
+    case 'ed-color': S.editExtra.color = v; render(); break;
+    case 'del':
+      clearTimeout(confirmT);
+      if (S.confirm === el.dataset.key) { S.confirm = ''; await doDelete(el.dataset.key); }
+      else { S.confirm = el.dataset.key; render(); confirmT = setTimeout(() => { S.confirm = ''; render(); }, 4000); }
+      break;
+    case 'proj-add': { const nid = await addProject(S.draft.proj); if (nid) { S.draft.proj = ''; render(); } break; }
+    case 'open': S.openId = id || ''; S.custom = false; S.edit = null; S.draft.tool = ''; S.draft.sub = ''; S.draft.ptodo = ''; render(); window.scrollTo({ top: 0 }); break;
+    case 'sub-add': { const nid = await addProject(S.draft.sub, id); if (nid) { S.draft.sub = ''; render(); $('#in-sub')?.focus(); } break; }
+    case 'custom': S.custom = !S.custom; render(); break;
+    case 'set-color': await patch('projects', id, { color: v }); break;
+    case 'logo-del': await patch('projects', id, { logo: '' }); break;
+    case 'tool-add': { const t = S.draft.tool; S.draft.tool = ''; await addTool(id, t); render(); $('#in-tool')?.focus(); break; }
+    case 'tool-quick': await addTool(id, v); break;
+    case 'tool-del': { const p = byId(id); if (p) await patch('projects', id, { tools: (p.tools || []).filter((t) => t !== v) }); break; }
+    case 'ptodo-add': { const t = S.draft.ptodo; S.draft.ptodo = ''; await addTodo(t, id); render(); $('#in-ptodo')?.focus(); break; }
+    case 'todo-add': { const d = S.draft; const t = d.todo; d.todo = ''; await addTodo(t, d.todoProj, d.todoDue, d.todoPrio); d.todoDue = ''; render(); $('#in-todo')?.focus(); break; }
+    case 'todo-toggle': { const t = S.data.todos.find((x) => x.id === id); if (t) await patch('todos', id, { done: !t.done, doneAt: !t.done ? Date.now() : 0 }); break; }
+  }
+});
+
+document.addEventListener('input', (ev) => {
+  const el = ev.target;
+  if (el.dataset.draft) {
+    const k = el.dataset.draft;
+    if (k === '__nsearch') { S.noteSearch = el.value; render(); }
+    else if (k === '__tproj') { S.todoProj = el.value; render(); }
+    else S.draft[k] = el.value;
+  } else if (el.hasAttribute('data-edit')) S.editText = el.value;
+  else if (el.dataset.extra) S.editExtra[el.dataset.extra] = el.value;
+  else if (el.dataset.actChange === 'size') {
+    const box = $('#phero'); if (box) box.style.setProperty('--ps', clampSize(el.value) + 'px');
+    const o = $('#sz-out'); if (o) o.textContent = clampSize(el.value) + ' px';
+  }
+});
+
+document.addEventListener('change', async (ev) => {
+  const el = ev.target;
+  if (el.dataset.extra) { S.editExtra[el.dataset.extra] = el.value; return; }
+  if (el.dataset.logo) {
+    const f = el.files && el.files[0]; if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { toast('Image trop lourde (8 Mo maximum).'); return; }
+    try { const url = await readLogo(f); await patch('projects', el.dataset.logo, { logo: url }); toast('Logo enregistré'); }
+    catch (e) { toast('Impossible de lire cette image. Essaie un PNG ou un JPEG.'); }
+    return;
+  }
+  const a = el.dataset.actChange, id = el.dataset.id;
+  if (!a) return;
+  if (a === 'status') await patch('projects', id, { status: el.value });
+  if (a === 'color') await patch('projects', id, { color: safeColor(el.value) });
+  if (a === 'font') await patch('projects', id, { font: fontOf(el.value).id });
+  if (a === 'size') await patch('projects', id, { size: clampSize(el.value) });
+});
+
+document.addEventListener('keydown', async (ev) => {
+  const el = ev.target;
+  if (ev.key === 'Escape' && S.edit) { cancelEdit(); return; }
+  if (ev.key !== 'Enter' || ev.isComposing) return;
+  if (el.hasAttribute && el.hasAttribute('data-edit')) {
+    if (el.tagName === 'TEXTAREA' && ev.shiftKey) return;
+    if (el.tagName === 'TEXTAREA' && !(ev.ctrlKey || ev.metaKey) && S.edit && S.edit.col === 'projects') return; // description : Entrée = retour ligne
+    ev.preventDefault(); await saveEdit(); return;
+  }
+  const map = { 'in-note': 'note-add', 'in-proj': 'proj-add', 'in-sub': 'sub-add', 'in-tool': 'tool-add', 'in-ptodo': 'ptodo-add', 'in-todo': 'todo-add' };
+  const act = map[el.id];
+  if (!act) return;
+  if (el.id === 'in-note' && ev.shiftKey) return;
+  ev.preventDefault();
+  const btn = document.querySelector(`[data-act="${act}"]`);
+  if (btn) btn.click();
+});
+
+document.addEventListener('focusout', (ev) => {
+  if (rendering) return;
+  const el = ev.target;
+  if (!el.hasAttribute || !el.hasAttribute('data-edit') || !S.edit) return;
+  // Enregistre en quittant le champ, sauf si on reste dans la zone d'édition (couleur, projet, boutons)
+  setTimeout(() => {
+    if (!S.edit) return;
+    const a = document.activeElement;
+    if (a && (a.hasAttribute('data-edit') || a.dataset.extra || (a.dataset.act || '').startsWith('ed-'))) return;
+    if (S.edit.col === 'projects') saveEdit();
+  }, 150);
+});
+
+boot();
+})();
+</script>

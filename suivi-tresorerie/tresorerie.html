@@ -1,0 +1,1257 @@
+<title>Ma Trésorerie</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout : appli à une colonne (max 1080px). En-tête collant avec onglets défilants, vues en cartes, formulaires dans un panneau modal. */
+:root {
+  --bg: #F2F5F4;
+  --surface: #FFFFFF;
+  --surface-2: #F7F9F8;
+  --ink: #14201E;
+  --muted: #5A6A66;
+  --line: #DAE2DF;
+  --accent: #0D6B61;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DFEEEB;
+  --credit: #1B7A49;
+  --debit: #B0412D;
+  --vir: #2C6CAC;
+  --ok: #1B7A49; --ok-soft: #DFF0E6;
+  --warn: #9A6200; --warn-soft: #FAEED5;
+  --crit: #B3261E; --crit-soft: #F8E1DE;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --grid: #E7ECEA;
+  --shadow: 0 1px 2px rgba(20,32,30,.05), 0 4px 14px rgba(20,32,30,.05);
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-ui: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1514; --surface: #162020; --surface-2: #1A2524; --ink: #E3EBE9; --muted: #98A9A4; --line: #2A3735;
+    --accent: #5BC1B2; --accent-ink: #0E1514; --accent-soft: #173330;
+    --credit: #62C98F; --debit: #EE8B76; --vir: #7FB2E8;
+    --ok: #62C98F; --ok-soft: #16301F; --warn: #E3B04E; --warn-soft: #382C13; --crit: #F08A80; --crit-soft: #3A1F1C;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s7: #9085e9; --s8: #e66767;
+    --grid: #22302E; --shadow: 0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1514; --surface: #162020; --surface-2: #1A2524; --ink: #E3EBE9; --muted: #98A9A4; --line: #2A3735;
+  --accent: #5BC1B2; --accent-ink: #0E1514; --accent-soft: #173330;
+  --credit: #62C98F; --debit: #EE8B76; --vir: #7FB2E8;
+  --ok: #62C98F; --ok-soft: #16301F; --warn: #E3B04E; --warn-soft: #382C13; --crit: #F08A80; --crit-soft: #3A1F1C;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s7: #9085e9; --s8: #e66767;
+  --grid: #22302E; --shadow: 0 1px 2px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-ui); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 80px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1080px; margin: 0 auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; }
+.pos { color: var(--credit); } .neg { color: var(--debit); } .virc { color: var(--vir); }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font-size: 18px; }
+h3 { font-size: 15px; }
+
+/* En-tête */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 14px 0; }
+.brand { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand h1 { font-size: 24px; }
+.brand .date { font-size: 13px; color: var(--muted); }
+.sync { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.sync::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.sync[data-s="ok"]::before { background: var(--ok); }
+.sync[data-s="saving"]::before { background: var(--warn); }
+.sync[data-s="local"]::before { background: var(--warn); }
+.sync[data-s="err"]::before { background: var(--crit); }
+nav.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-top: 10px; border-bottom: 1px solid var(--line); }
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs a { flex: none; padding: 9px 12px; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+nav.tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+nav.tabs a .badge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; text-align: center; line-height: 18px; }
+
+main { display: grid; gap: 16px; padding-top: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.grid2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+.kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
+.kpi .lab { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.kpi .val { font-size: 22px; font-weight: 600; }
+.kpi .sub { font-size: 13px; color: var(--muted); }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { color: var(--crit); }
+.btn.danger.armed { background: var(--crit); color: #fff; border-color: var(--crit); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.sm { padding: 4px 9px; font-size: 13px; }
+.row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+select.inline, input.inline { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 8px; font-size: 14px; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.crit { background: var(--crit-soft); color: var(--crit); }
+.pill.neutral { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+
+.alert { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 10px; }
+.alert + .alert { margin-top: 8px; }
+.alert.warn { background: var(--warn-soft); }
+.alert.crit { background: var(--crit-soft); }
+.alert.ok { background: var(--ok-soft); }
+.alert .ic { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: var(--surface); }
+.alert.warn .ic { background: var(--warn); } .alert.crit .ic { background: var(--crit); } .alert.ok .ic { background: var(--ok); }
+.alert .t { min-width: 0; }
+.banner { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+.list { display: grid; }
+.li { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 2px; border-top: 1px solid var(--line); }
+.li:first-child { border-top: 0; }
+.li.click { cursor: pointer; border-radius: 6px; }
+.li.click:hover { background: var(--surface-2); }
+.li .main { min-width: 0; }
+.li .main b { font-weight: 600; }
+.li .meta { font-size: 13px; color: var(--muted); }
+.li.off { opacity: .55; }
+.dt { font-family: var(--f-num); font-size: 12px; color: var(--muted); width: 56px; text-align: center; line-height: 1.2; }
+.dt b { display: block; font-size: 18px; color: var(--ink); font-weight: 600; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+
+.bar { height: 8px; border-radius: 4px; background: var(--grid); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+.bar.warn > i { background: var(--warn); } .bar.crit > i { background: var(--crit); } .bar.ok > i { background: var(--ok); }
+
+.empty { text-align: center; padding: 28px 12px; color: var(--muted); display: grid; gap: 10px; justify-items: center; }
+
+/* Tableaux */
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+td.r, th.r { text-align: right; }
+tr.tot td { font-weight: 700; border-bottom: 0; border-top: 2px solid var(--line); }
+
+/* Graphique */
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--muted); font-family: var(--f-num); font-size: 11px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; margin-bottom: 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 0; border-top: 2px solid; display: inline-block; }
+.legend i.dash { border-top-style: dashed; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: var(--shadow); min-width: 150px; z-index: 2; }
+.tip .d { color: var(--muted); margin-bottom: 4px; }
+.tip .r { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.tip .r span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.tip .r i { width: 12px; border-top: 2px solid; display: inline-block; }
+.tip .r b { font-family: var(--f-num); font-weight: 600; color: var(--ink); }
+
+/* Calendrier */
+.cal-nav { display: flex; align-items: center; gap: 8px; }
+.cal-nav h2 { min-width: 170px; text-align: center; text-transform: capitalize; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal .wd { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); text-align: center; padding-bottom: 4px; font-weight: 600; }
+.cal .day { min-height: 92px; border: 1px solid var(--line); border-radius: 8px; padding: 5px; background: var(--surface); cursor: pointer; display: flex; flex-direction: column; gap: 3px; text-align: left; min-width: 0; }
+.cal .day.out { background: transparent; border-style: dashed; opacity: .5; }
+.cal .day.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.cal .day.sel { background: var(--accent-soft); }
+.cal .day .n { font-family: var(--f-num); font-size: 12px; font-weight: 600; }
+.cal .chip { font-size: 11px; line-height: 1.25; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-left: 3px solid; background: var(--surface-2); }
+.cal .chip.d { border-color: var(--debit); } .cal .chip.c { border-color: var(--credit); } .cal .chip.v { border-color: var(--vir); }
+.cal .more { font-size: 11px; color: var(--muted); }
+.cal .dots { display: none; gap: 3px; flex-wrap: wrap; }
+.cal .dots i { width: 6px; height: 6px; border-radius: 50%; }
+.cal .dots i.d { background: var(--debit); } .cal .dots i.c { background: var(--credit); } .cal .dots i.v { background: var(--vir); }
+@media (max-width: 640px) {
+  .cal .day { min-height: 52px; align-items: center; }
+  .cal .chip, .cal .more { display: none; }
+  .cal .dots { display: flex; justify-content: center; }
+  .cal-nav h2 { min-width: 0; font-size: 16px; }
+}
+
+/* Comptes */
+.accs { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.acc { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--surface); display: grid; gap: 8px; cursor: pointer; text-align: left; }
+.acc:hover { border-color: var(--accent); }
+.acc .h { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.acc .bal { font-size: 22px; font-weight: 600; }
+.acc .use { font-size: 13px; color: var(--muted); }
+
+/* Formulaires */
+.form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); align-items: end; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.field input, .field select, .field textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 10px; font-size: 15px; }
+.field textarea { min-height: 64px; resize: vertical; }
+.field .hint { font-size: 12px; color: var(--muted); }
+.field.check { display: flex; align-items: center; gap: 8px; }
+.field.check input { width: auto; }
+.field.full { grid-column: 1 / -1; }
+.err { color: var(--crit); font-size: 13px; }
+
+.sheet-back { position: fixed; inset: 0; background: rgba(10,18,17,.45); z-index: 20; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sheet { background: var(--surface); border-radius: 14px; width: min(560px, 100%); max-height: 100%; overflow: auto; padding: 18px; display: grid; gap: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.sheet .foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 10px; font-size: 14px; z-index: 30; max-width: calc(100% - 32px); }
+
+.verdict { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+.cmp .lab { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.cmp .v { font-size: 16px; }
+.obj { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.obj:first-child { border-top: 0; padding-top: 0; }
+.obj .h { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+.obj .m { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+@media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .4s ease; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div>
+        <h1>Ma Trésorerie</h1>
+        <div class="date" id="today-label"></div>
+      </div>
+      <span class="sync" id="sync" data-s="saving">Connexion…</span>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+  </header>
+  <main id="view" aria-live="polite">
+    <div class="card empty">Chargement de tes comptes…</div>
+  </main>
+</div>
+<div id="sheet"></div>
+
+<script>
+(() => {
+"use strict";
+/* ---------- Utilitaires ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const NF = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+const NF0 = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const eur = v => NF.format(v || 0);
+const eur0 = v => NF0.format(Math.round(v || 0));
+const sgn = v => (v > 0 ? "+" : v < 0 ? "−" : "") + NF.format(Math.abs(v || 0));
+const DAY = 864e5;
+const D = s => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+const S = t => new Date(t).toISOString().slice(0, 10);
+const addDays = (s, n) => S(D(s) + n * DAY);
+const diffDays = (a, b) => Math.round((D(b) - D(a)) / DAY);
+const dim = (y, m0) => new Date(Date.UTC(y, m0 + 1, 0)).getUTCDate();
+const pad = n => String(n).padStart(2, "0");
+function addMonths(s, k, day) {
+  let y = +s.slice(0, 4), m = +s.slice(5, 7) - 1 + k;
+  y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+  const d = Math.min(day ?? +s.slice(8, 10), dim(y, m));
+  return `${y}-${pad(m + 1)}-${pad(d)}`;
+}
+const TODAY = (() => { const n = new Date(); return `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`; })();
+const monthStart = s => s.slice(0, 8) + "01";
+const monthEnd = s => addDays(addMonths(monthStart(s), 1), -1);
+const fmtD = (s, o) => new Date(D(s)).toLocaleDateString("fr-FR", { timeZone: "UTC", ...o });
+const fDate = s => fmtD(s, { day: "2-digit", month: "2-digit", year: "numeric" });
+const fDay = s => fmtD(s, { weekday: "short", day: "numeric", month: "short" });
+const fMonth = s => fmtD(s, { month: "long", year: "numeric" });
+const fMonthS = s => fmtD(s, { month: "short", year: "2-digit" });
+const uid = () => Math.random().toString(36).slice(2, 10);
+const num = v => { if (v === "" || v == null) return null; const n = parseFloat(String(v).replace(/\s/g, "").replace(",", ".")); return isFinite(n) ? n : null; };
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+const FREQ = {
+  mensuel: { l: "Mensuel", step: 1, f: 1 },
+  bimestriel: { l: "Tous les 2 mois", step: 2, f: 1 / 2 },
+  trimestriel: { l: "Trimestriel", step: 3, f: 1 / 3 },
+  semestriel: { l: "Semestriel", step: 6, f: 1 / 6 },
+  annuel: { l: "Annuel", step: 12, f: 1 / 12 },
+  hebdo: { l: "Hebdomadaire", step: 0, f: 52 / 12 },
+  ponctuel: { l: "Ponctuel", step: 0, f: 0 },
+};
+const SENS = { debit: "Prélèvement / dépense", credit: "Revenu / encaissement", virement: "Virement entre mes comptes" };
+const TYPES = { courant: "Compte courant", epargne: "Livret / épargne", joint: "Compte joint", placement: "Placement", autre: "Autre" };
+const OBJ_TYPES = {
+  epargne: "Atteindre un montant d'épargne",
+  seuil: "Garder un solde minimum",
+  plafond: "Plafonner une dépense variable",
+  taux: "Taux d'épargne mensuel",
+};
+const TABS = [
+  ["tableau", "Tableau de bord"], ["planning", "Planning"], ["operations", "Prélèvements"], ["comptes", "Comptes"],
+  ["soldes", "Soldes"], ["prevision", "Prévision"], ["variables", "Dépenses variables"], ["objectifs", "Objectifs"],
+];
+
+/* ---------- État ---------- */
+const emptyState = () => ({
+  version: 1, exemple: false,
+  params: { alerteJours: 3, horizonMois: 6, moisMoyenne: 3 },
+  comptes: [], operations: [], releves: [], depenses: [],
+  categories: [
+    { id: uid(), nom: "Alimentation", inclure: true, compteId: "", fixe: null },
+    { id: uid(), nom: "Carburant", inclure: true, compteId: "", fixe: null },
+  ],
+  objectifs: [],
+});
+function normalize(d) {
+  const e = emptyState();
+  const s = { ...e, ...(d || {}) };
+  s.params = { ...e.params, ...(s.params || {}) };
+  for (const k of ["comptes", "operations", "releves", "depenses", "categories", "objectifs"]) if (!Array.isArray(s[k])) s[k] = [];
+  return s;
+}
+let state = normalize(lsGet("treso-cache"));
+let rev = 0;
+const ui = Object.assign({
+  month: monthStart(TODAY), selDay: TODAY, horizon: 6, scope: "total",
+  atDate: addDays(TODAY, 30), atAcc: "total", simu: null,
+}, lsGet("treso-ui") || {});
+ui.month = ui.month || monthStart(TODAY);
+const saveUi = () => lsSet("treso-ui", { month: ui.month, horizon: ui.horizon, scope: ui.scope, atDate: ui.atDate, atAcc: ui.atAcc, simu: ui.simu });
+
+/* ---------- Stockage (base de l'artefact, sinon appareil) ---------- */
+let docRef = null, mode = "loading", saveTimer = null, saving = false, pendingSave = false;
+function setSync(s, txt) { const el = $("#sync"); el.dataset.s = s; el.textContent = txt; }
+async function initStore() {
+  let db = null;
+  try { db = window.claude?.use ? await window.claude.use("db") : null; } catch { db = null; }
+  if (!db) { mode = "local"; setSync("local", "Enregistré sur cet appareil"); render(); return; }
+  mode = "db"; docRef = db.doc("budget/main");
+  const timer = setTimeout(() => setSync("err", "Données injoignables pour l'instant"), 10000);
+  docRef.onSnapshot(snap => {
+    if (!snap.metadata?.fromCache) clearTimeout(timer);
+    const incoming = snap.exists ? normalize(snap.data()) : null;
+    if (!saving && !pendingSave) setSync("ok", "Synchronisé");
+    if (!incoming) { if (!snap.metadata?.fromCache) { state = normalize(null); rev++; render(); } return; }
+    if (JSON.stringify(incoming) === JSON.stringify(state)) { if (mode === "db" && $("#view .loading-flag")) render(); return; }
+    if (pendingSave || saving) return;
+    state = incoming; rev++; lsSet("treso-cache", state); render();
+  }, err => { clearTimeout(timer); setSync("err", "Synchronisation interrompue (" + err.code + ")"); });
+}
+function persist() {
+  rev++; lsSet("treso-cache", state); render();
+  if (mode !== "db") return;
+  pendingSave = true; setSync("saving", "Enregistrement…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flush, 500);
+}
+async function flush() {
+  if (saving) { saveTimer = setTimeout(flush, 300); return; }
+  saving = true; pendingSave = false;
+  try { await docRef.set(JSON.parse(JSON.stringify(state))); if (!pendingSave) setSync("ok", "Synchronisé"); }
+  catch (e) { setSync("err", "Échec de l'enregistrement"); toast(e?.code === "quota_exceeded" ? "Base pleine : supprime d'anciennes dépenses." : "Enregistrement impossible, réessaie dans un instant."); }
+  finally { saving = false; }
+}
+
+/* ---------- Accès aux données ---------- */
+const accById = id => state.comptes.find(a => a.id === id);
+const accName = id => accById(id)?.nom || "Compte supprimé";
+const accIndex = id => state.comptes.findIndex(a => a.id === id);
+const accColor = id => `var(--s${(Math.max(0, accIndex(id)) % 8) + 1})`;
+const defaultAcc = () => (state.comptes.find(a => a.type === "courant") || state.comptes[0])?.id || "";
+const opsActive = () => state.operations.filter(o => o.actif !== false);
+
+function occurrences(op, from, to) {
+  const out = [];
+  if (op.actif === false || !op.debut) return out;
+  const end = op.fin && op.fin < to ? op.fin : to;
+  if (op.debut > end) return out;
+  if (op.freq === "ponctuel") { if (op.debut >= from) out.push(op.debut); return out; }
+  if (op.freq === "hebdo") {
+    let d = op.debut;
+    if (d < from) d = addDays(d, Math.ceil(diffDays(d, from) / 7) * 7);
+    for (; d <= end; d = addDays(d, 7)) out.push(d);
+    return out;
+  }
+  const step = FREQ[op.freq]?.step || 1, day = +op.debut.slice(8, 10);
+  const mb = (+from.slice(0, 4) - +op.debut.slice(0, 4)) * 12 + (+from.slice(5, 7) - +op.debut.slice(5, 7));
+  let k = mb > step ? Math.floor((mb - 1) / step) : 0;
+  for (let i = 0; i < 3000; i++, k++) {
+    const d = addMonths(op.debut, k * step, day);
+    if (d > end) break;
+    if (d >= from) out.push(d);
+  }
+  return out;
+}
+function opsBetween(from, to, list = state.operations) {
+  const rows = [];
+  for (const op of list) for (const d of occurrences(op, from, to)) rows.push({ d, op });
+  return rows.sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : (a.op.sens === "credit" ? -1 : 1));
+}
+const mensualise = op => op.actif === false ? 0 : (op.montant || 0) * (FREQ[op.freq]?.f ?? 0);
+
+/* Dépenses variables */
+const ym = s => s.slice(0, 7);
+function lastMonths(n) { const out = []; for (let k = n; k >= 1; k--) out.push(ym(addMonths(monthStart(TODAY), -k))); return out; }
+function spend(catNom, month) { let t = 0; for (const e of state.depenses) if (e.categorie === catNom && ym(e.date) === month) t += e.montant || 0; return t; }
+function moyenne(cat) {
+  const months = lastMonths(state.params.moisMoyenne || 3);
+  const dates = state.depenses.filter(e => e.categorie === cat.nom).map(e => e.date).sort();
+  if (!dates.length) return { avg: 0, n: 0 };
+  const first = ym(dates[0]);
+  const used = months.filter(m => m >= first);
+  if (!used.length) return { avg: 0, n: 0 };
+  return { avg: used.reduce((t, m) => t + spend(cat.nom, m), 0) / used.length, n: used.length };
+}
+const budgetCat = cat => (cat.fixe != null && cat.fixe !== "") ? +cat.fixe : moyenne(cat).avg;
+const budgetVariable = () => state.categories.filter(c => c.inclure).reduce((t, c) => t + budgetCat(c), 0);
+
+/* ---------- Simulation de trésorerie ---------- */
+const simCache = new Map();
+function simulate(to, extra = []) {
+  const key = rev + "|" + to + "|" + JSON.stringify(extra);
+  if (simCache.has(key)) return simCache.get(key);
+  if (simCache.size > 20) simCache.clear();
+  const accs = state.comptes;
+  const rels = state.releves.filter(r => accById(r.compteId) && r.date).sort((a, b) => a.date < b.date ? -1 : 1);
+  let start = rels.length ? rels[0].date : TODAY;
+  if (start > TODAY) start = TODAY;
+  if (to < TODAY) to = TODAY;
+  const n = diffDays(start, to) + 1;
+  const dates = new Array(n);
+  for (let i = 0; i < n; i++) dates[i] = addDays(start, i);
+  const idx = new Map(dates.map((d, i) => [d, i]));
+  const day = Array.from({ length: n }, () => []);
+  const def = defaultAcc();
+  const allOps = [...state.operations, ...extra];
+  for (const op of allOps) {
+    for (const d of occurrences(op, start, to)) {
+      const i = idx.get(d), m = op.montant || 0;
+      if (op.sens === "virement") {
+        day[i].push({ c: op.compteId, v: -m, vir: true });
+        day[i].push({ c: op.compteDest, v: m, vir: true });
+      } else day[i].push({ c: op.compteId, v: op.sens === "credit" ? m : -m });
+    }
+  }
+  for (const e of state.depenses) {
+    if (e.date >= start && e.date <= TODAY) day[idx.get(e.date)].push({ c: accById(e.compteId) ? e.compteId : def, v: -(e.montant || 0), varr: true });
+  }
+  // Budget variable : reste du mois en cours étalé jusqu'à la fin du mois, puis budget mensuel étalé par jour
+  const cats = state.categories.filter(c => c.inclure);
+  const tIdx = idx.get(TODAY);
+  const curEnd = monthEnd(TODAY), leftDays = diffDays(TODAY, curEnd);
+  for (const cat of cats) {
+    const B = budgetCat(cat); if (!B) continue;
+    const c = accById(cat.compteId) ? cat.compteId : def; if (!c) continue;
+    const rest = Math.max(0, B - spend(cat.nom, ym(TODAY)));
+    for (let i = tIdx + 1; i < n; i++) {
+      const d = dates[i];
+      const v = d <= curEnd ? (leftDays ? rest / leftDays : 0) : B / dim(+d.slice(0, 4), +d.slice(5, 7) - 1);
+      if (v) day[i].push({ c, v: -v, varr: true, fut: true });
+    }
+  }
+  const relDay = new Map();
+  for (const r of rels) { if (!relDay.has(r.date)) relDay.set(r.date, new Map()); relDay.get(r.date).set(r.compteId, r); }
+  const hasRel = new Set(rels.map(r => r.compteId));
+  const bal = {}, inA = {}, outA = {}, cur = {};
+  for (const a of accs) { bal[a.id] = new Array(n).fill(null); inA[a.id] = new Array(n).fill(0); outA[a.id] = new Array(n).fill(0); cur[a.id] = null; }
+  const total = new Array(n).fill(null), inT = new Array(n).fill(0), outT = new Array(n).fill(0);
+  const ecarts = {};
+  for (let i = 0; i < n; i++) {
+    const d = dates[i], net = {};
+    for (const f of day[i]) {
+      if (!(f.c in cur)) continue;
+      if (cur[f.c] == null && !(hasRel.has(f.c) ? false : d >= TODAY)) continue;
+      net[f.c] = (net[f.c] || 0) + f.v;
+      if (f.v > 0) inA[f.c][i] += f.v; else outA[f.c][i] -= f.v;
+      if (!f.vir) { if (f.v > 0) inT[i] += f.v; else outT[i] -= f.v; }
+    }
+    let tot = null;
+    for (const a of accs) {
+      let b = cur[a.id];
+      if (b == null && !hasRel.has(a.id) && d === TODAY) b = 0;
+      const r = relDay.get(d)?.get(a.id);
+      if (r) { if (b != null) ecarts[r.id] = r.solde - (b + (net[a.id] || 0)); b = r.solde; }
+      else if (b != null) b += net[a.id] || 0;
+      cur[a.id] = b; bal[a.id][i] = b;
+      if (b != null) tot = (tot || 0) + b;
+    }
+    total[i] = tot;
+  }
+  const res = { start, to, dates, idx, bal, total, inA, outA, inT, outT, ecarts };
+  simCache.set(key, res);
+  return res;
+}
+const SIM_END = () => addMonths(TODAY, 24);
+const series = (sim, scope) => scope === "total" ? sim.total : (sim.bal[scope] || []);
+const valAt = (sim, scope, d) => { const i = sim.idx.get(d); return i == null ? null : series(sim, scope)[i]; };
+function minOver(sim, scope, from, to) {
+  const arr = series(sim, scope); let best = null, bd = null;
+  const a = sim.idx.get(from) ?? 0, b = sim.idx.get(to) ?? sim.dates.length - 1;
+  for (let i = a; i <= b; i++) if (arr[i] != null && (best == null || arr[i] < best)) { best = arr[i]; bd = sim.dates[i]; }
+  return { v: best, d: bd };
+}
+function firstBelow(sim, scope, lim, from, to) {
+  const arr = series(sim, scope); const a = sim.idx.get(from) ?? 0, b = sim.idx.get(to) ?? sim.dates.length - 1;
+  for (let i = a; i <= b; i++) if (arr[i] != null && arr[i] < lim) return { d: sim.dates[i], v: arr[i] };
+  return null;
+}
+
+/* ---------- Graphique en ligne ---------- */
+function niceStep(range, count) {
+  const raw = range / count, p = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+  const f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+}
+const charts = [];
+function lineChart(el, spec) {
+  charts.push([el, spec]); drawChart(el, spec);
+}
+function drawChart(el, { dates, series: sers, seuil, seuilLabel = "Seuil", height = 240, todayLine = true }) {
+  const W = Math.max(280, Math.floor(el.clientWidth || 600)), H = height;
+  const pl = 64, pr = 12, pt = 12, pb = 26, n = dates.length;
+  let lo = Infinity, hi = -Infinity;
+  for (const s of sers) for (const v of s.values) if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  if (seuil != null) { lo = Math.min(lo, seuil); hi = Math.max(hi, seuil); }
+  if (!isFinite(lo)) { el.innerHTML = '<div class="empty">Pas encore de solde à afficher. Saisis un solde dans l\'onglet Soldes.</div>'; return; }
+  if (lo > 0 && lo < hi * 0.35) lo = 0;
+  if (hi === lo) { hi += 100; lo -= 100; }
+  const step = niceStep(hi - lo, 4);
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const x = i => pl + (n <= 1 ? 0 : i / (n - 1)) * (W - pl - pr);
+  const y = v => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
+  let g = "";
+  for (let v = lo; v <= hi + step / 2; v += step) {
+    g += `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="${Math.abs(v) < 1e-9 ? 1.5 : 1}"${Math.abs(v) < 1e-9 ? ' style="stroke:var(--muted);opacity:.6"' : ""}/>`;
+    g += `<text x="${pl - 8}" y="${y(v) + 4}" text-anchor="end">${esc(eur0(v))}</text>`;
+  }
+  const monthIdx = []; for (let i = 0; i < n; i++) if (dates[i].endsWith("-01")) monthIdx.push(i);
+  const every = Math.max(1, Math.ceil(monthIdx.length / Math.max(2, Math.floor((W - pl) / 70))));
+  monthIdx.forEach((i, k) => {
+    if (k % every) return;
+    g += `<line x1="${x(i)}" x2="${x(i)}" y1="${H - pb}" y2="${H - pb + 4}" stroke="var(--line)"/>`;
+    g += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(fMonthS(dates[i]))}</text>`;
+  });
+  const ti = dates.indexOf(TODAY);
+  if (todayLine && ti > 0 && ti < n - 1) {
+    g += `<rect x="${x(ti)}" y="${pt}" width="${W - pr - x(ti)}" height="${H - pt - pb}" fill="var(--surface-2)" opacity=".7"/>`;
+    g += `<line x1="${x(ti)}" x2="${x(ti)}" y1="${pt}" y2="${H - pb}" stroke="var(--muted)" stroke-dasharray="3 3"/>`;
+    g += `<text x="${x(ti) + 5}" y="${pt + 11}">aujourd'hui</text>`;
+  }
+  if (seuil != null) {
+    g += `<line x1="${pl}" x2="${W - pr}" y1="${y(seuil)}" y2="${y(seuil)}" stroke="var(--warn)" stroke-dasharray="6 4" stroke-width="1.5"/>`;
+    g += `<text x="${W - pr}" y="${y(seuil) - 5}" text-anchor="end" style="fill:var(--warn)">${esc(seuilLabel)} ${esc(eur0(seuil))}</text>`;
+  }
+  for (const s of sers) {
+    let dpath = "", pen = false;
+    s.values.forEach((v, i) => { if (v == null) { pen = false; return; } dpath += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1); pen = true; });
+    g += `<path d="${dpath}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ' stroke-dasharray="5 4"' : ""}/>`;
+    const li = s.values.length - 1;
+    if (s.values[li] != null && !s.dash) g += `<circle cx="${x(li)}" cy="${y(s.values[li])}" r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`;
+  }
+  g += `<g class="hov" style="display:none"><line class="hl" y1="${pt}" y2="${H - pb}" stroke="var(--ink)" stroke-width="1" opacity=".5"/>${sers.map(s => `<circle r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`).join("")}</g>`;
+  g += `<rect class="hit" x="${pl}" y="0" width="${W - pl - pr}" height="${H}" fill="transparent"/>`;
+  const legend = sers.length > 1 ? `<div class="legend">${sers.map(s => `<span><i class="${s.dash ? "dash" : ""}" style="border-color:${s.color}"></i>${esc(s.label)}</span>`).join("")}</div>` : "";
+  el.innerHTML = `${legend}<div class="chart"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Évolution du solde">${g}</svg><div class="tip" hidden></div></div>`;
+  const svg = el.querySelector("svg"), tip = el.querySelector(".tip"), hov = svg.querySelector(".hov"), box = el.querySelector(".chart");
+  const move = ev => {
+    const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
+    const i = Math.max(0, Math.min(n - 1, Math.round((px - pl) / (W - pl - pr) * (n - 1))));
+    hov.style.display = ""; hov.querySelector(".hl").setAttribute("x1", x(i)); hov.querySelector(".hl").setAttribute("x2", x(i));
+    hov.querySelectorAll("circle").forEach((c, k) => { const v = sers[k].values[i]; c.style.display = v == null ? "none" : ""; if (v != null) { c.setAttribute("cx", x(i)); c.setAttribute("cy", y(v)); } });
+    tip.hidden = false; tip.textContent = "";
+    const dd = document.createElement("div"); dd.className = "d"; dd.textContent = fDay(dates[i]) + (dates[i] > TODAY ? " · prévu" : ""); tip.append(dd);
+    sers.forEach(s => {
+      const v = s.values[i]; if (v == null) return;
+      const row = document.createElement("div"); row.className = "r";
+      const sp = document.createElement("span"); const ic = document.createElement("i"); ic.style.borderColor = s.color; if (s.dash) ic.style.borderTopStyle = "dashed";
+      sp.append(ic, document.createTextNode(s.label));
+      const b = document.createElement("b"); b.textContent = eur(v);
+      row.append(sp, b); tip.append(row);
+    });
+    const bw = box.clientWidth, tx = (x(i) / W) * r.width;
+    tip.style.left = Math.min(Math.max(0, tx + 12 + 170 > bw ? tx - 182 : tx + 12), Math.max(0, bw - 170)) + "px";
+    tip.style.top = "8px";
+  };
+  const hit = svg.querySelector(".hit");
+  hit.addEventListener("pointermove", move);
+  hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { hov.style.display = "none"; tip.hidden = true; });
+}
+let rsz; window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => charts.forEach(([el, s]) => el.isConnected && drawChart(el, s)), 150); });
+
+/* ---------- Panneau de formulaire ---------- */
+function fieldHtml(f, v) {
+  const id = "f-" + f.id;
+  const val = v ?? "";
+  const cls = "field" + (f.full ? " full" : "") + (f.type === "checkbox" ? " check" : "");
+  let input;
+  if (f.type === "select") input = `<select id="${id}">${f.options.map(([k, l]) => `<option value="${esc(k)}"${String(k) === String(val) ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  else if (f.type === "textarea") input = `<textarea id="${id}" placeholder="${esc(f.ph || "")}">${esc(val)}</textarea>`;
+  else if (f.type === "checkbox") return `<div class="${cls}" data-f="${f.id}"><input type="checkbox" id="${id}"${val ? " checked" : ""}><label for="${id}">${esc(f.label)}</label></div>`;
+  else if (f.type === "money") input = `<input id="${id}" type="text" inputmode="decimal" autocomplete="off" value="${esc(val === null ? "" : String(val).replace(".", ","))}" placeholder="${esc(f.ph || "0,00")}">`;
+  else input = `<input id="${id}" type="${f.type || "text"}" value="${esc(val)}" placeholder="${esc(f.ph || "")}"${f.min ? ` min="${f.min}"` : ""}${f.max ? ` max="${f.max}"` : ""}${f.step ? ` step="${f.step}"` : ""}>`;
+  return `<div class="${cls}" data-f="${f.id}"><label for="${id}">${esc(f.label)}</label>${input}${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ""}</div>`;
+}
+function readFields(root, fields) {
+  const v = {};
+  for (const f of fields) {
+    const el = root.querySelector("#f-" + f.id); if (!el) continue;
+    v[f.id] = f.type === "checkbox" ? el.checked : f.type === "money" || f.type === "number" ? num(el.value) : el.value.trim();
+  }
+  return v;
+}
+function openForm({ title, fields, values = {}, onSave, onDelete, saveLabel = "Enregistrer" }) {
+  const host = $("#sheet");
+  host.innerHTML = `<div class="sheet-back"><form class="sheet" novalidate>
+    <div class="card-head" style="margin:0"><h2>${esc(title)}</h2><button type="button" class="btn ghost sm" data-close>Fermer</button></div>
+    <div class="form-grid">${fields.map(f => fieldHtml(f, values[f.id])).join("")}</div>
+    <div class="err" hidden></div>
+    <div class="foot"><div>${onDelete ? '<button type="button" class="btn danger" data-del>Supprimer</button>' : ""}</div>
+    <div class="row-actions"><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">${esc(saveLabel)}</button></div></div>
+  </form></div>`;
+  const form = host.querySelector("form");
+  const sync = () => { const v = readFields(form, fields); for (const f of fields) if (f.when) form.querySelector(`[data-f="${f.id}"]`).hidden = !f.when(v); };
+  sync();
+  form.addEventListener("input", sync); form.addEventListener("change", sync);
+  const close = () => { host.innerHTML = ""; document.removeEventListener("keydown", onKey); };
+  const onKey = e => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  host.querySelector(".sheet-back").addEventListener("click", e => { if (e.target.classList.contains("sheet-back")) close(); });
+  host.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", close));
+  const errEl = form.querySelector(".err");
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const v = readFields(form, fields);
+    for (const f of fields) {
+      const shown = !f.when || f.when(v);
+      if (shown && f.required && (v[f.id] === "" || v[f.id] == null)) { errEl.hidden = false; errEl.textContent = `Renseigne le champ « ${f.label} ».`; form.querySelector("#f-" + f.id).focus(); return; }
+    }
+    const msg = onSave(v);
+    if (msg) { errEl.hidden = false; errEl.textContent = msg; return; }
+    close();
+  });
+  const del = host.querySelector("[data-del]");
+  if (del) del.addEventListener("click", () => {
+    if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "Confirmer la suppression"; return; }
+    const msg = onDelete(); if (msg) { errEl.hidden = false; errEl.textContent = msg; return; }
+    close();
+  });
+  setTimeout(() => form.querySelector("input,select,textarea")?.focus(), 30);
+}
+let toastT;
+function toast(msg) {
+  let t = $(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.append(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600);
+}
+
+/* ---------- Formulaires métier ---------- */
+const accOptions = (withTotal = false) => [...(withTotal ? [["total", "Tous les comptes"]] : []), ...state.comptes.map(a => [a.id, a.nom])];
+function formCompte(a) {
+  openForm({
+    title: a ? "Modifier le compte" : "Nouveau compte",
+    values: a || { type: "courant" },
+    fields: [
+      { id: "nom", label: "Nom du compte", required: true, ph: "Compte courant" },
+      { id: "banque", label: "Banque", ph: "Ma banque" },
+      { id: "type", label: "Type", type: "select", options: Object.entries(TYPES) },
+      { id: "seuil", label: "Seuil d'alerte", type: "money", hint: "Alerte si le solde prévu passe en dessous", ph: "Facultatif" },
+      { id: "utilite", label: "Utilité du compte", type: "textarea", full: true, ph: "Ex. : reçoit le salaire, paie les charges courantes" },
+    ],
+    onSave: v => {
+      if (a) Object.assign(a, v); else state.comptes.push({ id: uid(), ...v });
+      persist(); toast(a ? "Compte modifié" : "Compte ajouté");
+    },
+    onDelete: a && (() => {
+      const used = state.operations.some(o => o.compteId === a.id || o.compteDest === a.id);
+      if (used) return "Ce compte est utilisé par des prélèvements. Change-les de compte ou supprime-les d'abord.";
+      state.comptes = state.comptes.filter(x => x !== a);
+      state.releves = state.releves.filter(r => r.compteId !== a.id);
+      persist(); toast("Compte supprimé");
+    }),
+  });
+}
+function formOperation(o, preset = {}) {
+  if (!state.comptes.length) { toast("Crée d'abord un compte."); location.hash = "comptes"; return; }
+  const vals = o ? { ...o } : { sens: "debit", freq: "mensuel", debut: TODAY, compteId: defaultAcc(), actif: true, ...preset };
+  openForm({
+    title: o ? "Modifier l'opération" : "Nouvelle opération récurrente",
+    values: vals,
+    fields: [
+      { id: "libelle", label: "Libellé", required: true, ph: "Loyer, salaire, forfait mobile…" },
+      { id: "sens", label: "Type", type: "select", options: Object.entries(SENS) },
+      { id: "montant", label: "Montant", type: "money", required: true },
+      { id: "freq", label: "Fréquence", type: "select", options: Object.entries(FREQ).map(([k, f]) => [k, f.l]) },
+      { id: "debut", label: "Date (1re échéance)", type: "date", required: true, hint: "Le jour du mois est repris à chaque échéance" },
+      { id: "fin", label: "Date de fin", type: "date", hint: "Facultatif", when: v => v.freq !== "ponctuel" },
+      { id: "compteId", label: "Compte débité / crédité", type: "select", options: accOptions() },
+      { id: "compteDest", label: "Vers le compte", type: "select", options: accOptions(), when: v => v.sens === "virement" },
+      { id: "categorie", label: "Catégorie", ph: "Logement, abonnements…" },
+      { id: "actif", label: "Active (décocher pour suspendre)", type: "checkbox" },
+    ],
+    onSave: v => {
+      if (!(v.montant > 0)) return "Le montant doit être positif (le type indique le sens).";
+      if (v.sens === "virement" && v.compteDest === v.compteId) return "Choisis deux comptes différents pour un virement.";
+      if (v.fin && v.fin < v.debut) return "La date de fin est avant la première échéance.";
+      if (v.sens !== "virement") v.compteDest = "";
+      if (v.freq === "ponctuel") v.fin = "";
+      if (o) Object.assign(o, v); else state.operations.push({ id: uid(), ...v });
+      persist(); toast(o ? "Opération modifiée" : "Opération ajoutée au planning");
+    },
+    onDelete: o && (() => { state.operations = state.operations.filter(x => x !== o); persist(); toast("Opération supprimée"); }),
+  });
+}
+function formReleve(r) {
+  if (!state.comptes.length) { toast("Crée d'abord un compte."); location.hash = "comptes"; return; }
+  openForm({
+    title: r ? "Modifier le solde" : "Saisir un solde bancaire",
+    values: r || { date: TODAY, compteId: defaultAcc() },
+    fields: [
+      { id: "compteId", label: "Compte", type: "select", options: accOptions() },
+      { id: "date", label: "Date", type: "date", required: true, max: TODAY },
+      { id: "solde", label: "Solde lu sur le relevé / l'appli bancaire", type: "money", required: true, full: true, hint: "Les prévisions repartent de ce solde." },
+    ],
+    onSave: v => {
+      if (v.date > TODAY) return "Le solde saisi doit être daté d'aujourd'hui ou avant.";
+      const dup = state.releves.find(x => x !== r && x.compteId === v.compteId && x.date === v.date);
+      if (dup) { dup.solde = v.solde; if (r) state.releves = state.releves.filter(x => x !== r); }
+      else if (r) Object.assign(r, v); else state.releves.push({ id: uid(), ...v });
+      persist(); toast("Solde enregistré");
+    },
+    onDelete: r && (() => { state.releves = state.releves.filter(x => x !== r); persist(); toast("Solde supprimé"); }),
+  });
+}
+function formCategorie(c) {
+  openForm({
+    title: c ? "Catégorie de dépense variable" : "Nouvelle catégorie",
+    values: c || { inclure: true, compteId: defaultAcc() },
+    fields: [
+      { id: "nom", label: "Nom", required: true, ph: "Alimentation, carburant…" },
+      { id: "compteId", label: "Compte qui paie", type: "select", options: accOptions() },
+      { id: "fixe", label: "Budget mensuel fixé", type: "money", ph: "Vide = moyenne calculée", hint: "Laisse vide pour utiliser la moyenne des mois passés" },
+      { id: "inclure", label: "Inclure dans le budget et les prévisions", type: "checkbox" },
+    ],
+    onSave: v => {
+      if (state.categories.some(x => x !== c && x.nom.toLowerCase() === v.nom.toLowerCase())) return "Cette catégorie existe déjà.";
+      if (c) { const old = c.nom; Object.assign(c, v); if (old !== v.nom) { state.depenses.forEach(e => { if (e.categorie === old) e.categorie = v.nom; }); state.objectifs.forEach(o => { if (o.categorie === old) o.categorie = v.nom; }); } }
+      else state.categories.push({ id: uid(), ...v });
+      persist(); toast("Catégorie enregistrée");
+    },
+    onDelete: c && (() => {
+      if (state.depenses.some(e => e.categorie === c.nom)) return "Des dépenses utilisent cette catégorie. Décoche plutôt « Inclure » ou supprime ces dépenses.";
+      state.categories = state.categories.filter(x => x !== c); persist(); toast("Catégorie supprimée");
+    }),
+  });
+}
+function formObjectif(o) {
+  const vals = o ? { ...o } : { type: "epargne", compteId: (state.comptes.find(a => a.type === "epargne") || state.comptes[0])?.id || "", echeance: addMonths(TODAY, 12), categorie: state.categories[0]?.nom || "" };
+  openForm({
+    title: o ? "Modifier l'objectif" : "Nouvel objectif",
+    values: vals,
+    fields: [
+      { id: "type", label: "Type d'objectif", type: "select", options: Object.entries(OBJ_TYPES), full: true },
+      { id: "libelle", label: "Nom", required: true, ph: "Épargne de précaution", full: true },
+      { id: "compteId", label: "Compte", type: "select", options: accOptions(false), when: v => v.type === "epargne" },
+      { id: "scope", label: "Compte surveillé", type: "select", options: accOptions(true), when: v => v.type === "seuil" },
+      { id: "categorie", label: "Catégorie", type: "select", options: state.categories.map(c => [c.nom, c.nom]), when: v => v.type === "plafond" },
+      { id: "cible", label: "Montant cible", type: "money", required: true, when: v => v.type === "epargne" },
+      { id: "minimum", label: "Solde minimum", type: "money", required: true, when: v => v.type === "seuil" },
+      { id: "plafond", label: "Plafond mensuel", type: "money", required: true, when: v => v.type === "plafond" },
+      { id: "taux", label: "Taux visé (%)", type: "money", required: true, when: v => v.type === "taux", ph: "10" },
+      { id: "echeance", label: "Échéance", type: "date", when: v => v.type === "epargne" },
+    ],
+    onSave: v => {
+      if (o) Object.assign(o, v); else state.objectifs.push({ id: uid(), ...v });
+      persist(); toast("Objectif enregistré");
+    },
+    onDelete: o && (() => { state.objectifs = state.objectifs.filter(x => x !== o); persist(); toast("Objectif supprimé"); }),
+  });
+}
+
+/* ---------- Indicateurs ---------- */
+function synthese() {
+  let rev_ = 0, ch = 0, vir = 0;
+  for (const o of state.operations) { const m = mensualise(o); if (o.sens === "credit") rev_ += m; else if (o.sens === "debit") ch += m; else vir += m; }
+  const varb = budgetVariable();
+  return { revenus: rev_, charges: ch, virements: vir, variables: varb, reste: rev_ - ch - varb };
+}
+function evalObj(o, sim) {
+  const h = addMonths(TODAY, state.params.horizonMois || 6);
+  if (o.type === "epargne") {
+    const cur = valAt(sim, o.compteId, TODAY) ?? 0, cible = o.cible || 0;
+    const ech = o.echeance || h, prev = ech <= sim.to ? valAt(sim, o.compteId, ech) : null;
+    const mois = Math.max(1, Math.round(diffDays(TODAY, ech) / 30.44));
+    const besoin = Math.max(0, (cible - cur) / mois);
+    const status = cur >= cible ? "ok" : prev != null && prev >= cible ? "ok" : ech < TODAY ? "crit" : "warn";
+    const lab = cur >= cible ? "Atteint" : status === "ok" ? "En bonne voie" : ech < TODAY ? "Échéance dépassée" : "En retard";
+    return { pct: cible ? cur / cible : 0, status, lab, left: `${eur0(cur)} sur ${eur0(cible)} · ${accName(o.compteId)}`,
+      right: `Échéance ${fDate(ech)}`, detail: prev != null ? `Prévu à l'échéance : ${eur0(prev)} · effort nécessaire : ${eur0(besoin)} / mois` : `Effort nécessaire : ${eur0(besoin)} / mois` };
+  }
+  if (o.type === "seuil") {
+    const scope = o.scope || "total", mn = minOver(sim, scope, TODAY, h), lim = o.minimum || 0;
+    const fb = firstBelow(sim, scope, lim, TODAY, h);
+    const name = scope === "total" ? "Tous les comptes" : accName(scope);
+    return { pct: mn.v == null ? 0 : Math.max(0, Math.min(1, mn.v / (lim || 1) / 2)), bar: false, status: fb ? (mn.v < 0 ? "crit" : "warn") : "ok", lab: fb ? "Seuil franchi" : "Respecté",
+      left: `${name} · minimum ${eur0(lim)}`, right: `Point bas ${mn.v == null ? "—" : eur0(mn.v)}${mn.d ? " le " + fDate(mn.d) : ""}`,
+      detail: fb ? `Passage sous ${eur0(lim)} prévu le ${fDate(fb.d)}` : `Aucun passage sous le minimum sur ${state.params.horizonMois} mois` };
+  }
+  if (o.type === "plafond") {
+    const cat = state.categories.find(c => c.nom === o.categorie);
+    const sp = spend(o.categorie, ym(TODAY)), pl = o.plafond || 0, av = cat ? moyenne(cat).avg : 0;
+    const r = pl ? sp / pl : 0;
+    return { pct: r, status: r > 1 ? "crit" : r > 0.8 ? "warn" : "ok", lab: r > 1 ? "Dépassé" : r > 0.8 ? "Attention" : "Sous le plafond",
+      left: `${o.categorie} · ${eur0(sp)} sur ${eur0(pl)} ce mois`, right: `Moyenne ${eur0(av)} / mois`,
+      detail: av > pl ? `La moyenne dépasse le plafond de ${eur0(av - pl)}.` : `Marge moyenne : ${eur0(pl - av)} / mois` };
+  }
+  if (o.type === "taux") {
+    const s = synthese(), t = s.revenus ? s.reste / s.revenus * 100 : 0, cible = o.taux || 0;
+    return { pct: cible ? t / cible : 0, status: t >= cible ? "ok" : t >= cible * 0.7 ? "warn" : "crit", lab: t >= cible ? "Atteint" : "Insuffisant",
+      left: `${t.toFixed(1).replace(".", ",")} % épargnés · cible ${String(cible).replace(".", ",")} %`, right: `Reste ${eur0(s.reste)} / mois`,
+      detail: `Revenus ${eur0(s.revenus)} − charges ${eur0(s.charges)} − variables ${eur0(s.variables)}` };
+  }
+  return { pct: 0, status: "neutral", lab: "", left: "", right: "", detail: "" };
+}
+const ICON = { ok: "✓", warn: "!", crit: "✕" };
+function computeAlerts(sim) {
+  const out = [], N = state.params.alerteJours ?? 3, h = addMonths(TODAY, state.params.horizonMois || 6);
+  for (const { d, op } of opsBetween(TODAY, addDays(TODAY, N), opsActive())) {
+    if (op.sens === "credit") continue;
+    const j = diffDays(TODAY, d);
+    out.push({ lvl: "warn", t: `${op.libelle} : ${eur(op.montant)} ${op.sens === "virement" ? "viré vers " + accName(op.compteDest) : "prélevé"}`,
+      s: `${j === 0 ? "Aujourd'hui" : j === 1 ? "Demain" : "Dans " + j + " jours"} · ${fDay(d)} · ${accName(op.compteId)}`, kind: "prel" });
+  }
+  for (const a of state.comptes) {
+    const neg = firstBelow(sim, a.id, 0, TODAY, h);
+    if (neg) { out.push({ lvl: "crit", t: `${a.nom} : découvert prévu`, s: `Solde prévu ${eur(neg.v)} le ${fDate(neg.d)}`, kind: "seuil" }); continue; }
+    if (a.seuil != null && a.seuil !== "") {
+      const fb = firstBelow(sim, a.id, +a.seuil, TODAY, h);
+      if (fb) out.push({ lvl: "warn", t: `${a.nom} passe sous ${eur0(+a.seuil)}`, s: `Solde prévu ${eur(fb.v)} le ${fDate(fb.d)}`, kind: "seuil" });
+    }
+  }
+  return out;
+}
+
+/* ---------- Vues ---------- */
+const view = () => $("#view");
+const noAccount = () => `<div class="card empty"><h2>Commence par tes comptes</h2><p>Ajoute ton compte courant et tes livrets, avec leur utilité. Les prélèvements et les prévisions s'appuient dessus.</p><button class="btn primary" data-act="add-compte">Ajouter un compte</button></div>`;
+const banner = () => state.exemple ? `<div class="banner"><div><b>Données d'exemple.</b> <span class="muted">Explore l'outil, puis efface-les pour saisir tes vrais comptes.</span></div><button class="btn danger" data-act="clear-ex">Effacer les exemples</button></div>` : "";
+function opRow(d, op, extra = "") {
+  const cls = op.sens === "credit" ? "pos" : op.sens === "virement" ? "virc" : "neg";
+  const s = op.sens === "credit" ? "+" : op.sens === "virement" ? "⇄ " : "−";
+  const where = op.sens === "virement" ? `${esc(accName(op.compteId))} → ${esc(accName(op.compteDest))}` : esc(accName(op.compteId));
+  return `<div class="li click${d < TODAY ? " off" : ""}" data-act="edit-op" data-id="${op.id}">
+    <div class="dt">${esc(fmtD(d, { weekday: "short" }))}<b>${+d.slice(8)}</b>${esc(fmtD(d, { month: "short" }))}</div>
+    <div class="main"><b>${esc(op.libelle)}</b><div class="meta">${where}${op.categorie ? " · " + esc(op.categorie) : ""}${extra}</div></div>
+    <div class="num ${cls}">${s}${esc(eur(op.montant))}</div></div>`;
+}
+
+function vTableau() {
+  if (!state.comptes.length) return banner() + noAccount();
+  const sim = simulate(SIM_END());
+  const H = state.params.horizonMois || 6, hEnd = addMonths(TODAY, H);
+  const tot = valAt(sim, "total", TODAY), fin = valAt(sim, "total", monthEnd(TODAY));
+  const epargne = state.comptes.filter(a => a.type === "epargne" || a.type === "placement").reduce((t, a) => t + (valAt(sim, a.id, TODAY) || 0), 0);
+  const mn = minOver(sim, "total", TODAY, hEnd);
+  const restOps = opsBetween(addDays(TODAY, 1), monthEnd(TODAY), opsActive()).filter(r => r.op.sens === "debit");
+  const restVar = state.categories.filter(c => c.inclure).reduce((t, c) => t + Math.max(0, budgetCat(c) - spend(c.nom, ym(TODAY))), 0);
+  const restPay = restOps.reduce((t, r) => t + r.op.montant, 0);
+  const al = computeAlerts(sim);
+  const next = opsBetween(TODAY, addMonths(TODAY, 2), opsActive()).slice(0, 7);
+  const objs = state.objectifs.map(o => [o, evalObj(o, sim)]);
+  const s = synthese();
+  setTimeout(() => {
+    const el = $("#ch-dash"); if (!el) return;
+    const a = sim.idx.get(TODAY), b = sim.idx.get(hEnd);
+    const from = Math.max(0, a - 30);
+    lineChart(el, { dates: sim.dates.slice(from, b + 1), series: [{ label: "Trésorerie totale", color: "var(--accent)", values: sim.total.slice(from, b + 1) }] });
+  });
+  return `${banner()}
+  <section class="card" aria-labelledby="h-al">
+    <div class="card-head"><h2 id="h-al">Alertes</h2>
+      <label class="small muted">Prévenir <select class="inline" data-param="alerteJours">${[1, 2, 3, 5, 7, 10, 15].map(n => `<option value="${n}"${n === state.params.alerteJours ? " selected" : ""}>${n} j</option>`).join("")}</select> avant un prélèvement</label></div>
+    ${al.length ? al.map(x => `<div class="alert ${x.lvl}"><span class="ic" aria-hidden="true">${ICON[x.lvl]}</span><div class="t"><b>${esc(x.t)}</b><div class="small muted">${esc(x.s)}</div></div><span class="pill ${x.lvl}">${x.kind === "prel" ? "Prélèvement" : x.lvl === "crit" ? "Découvert" : "Seuil"}</span></div>`).join("")
+      : `<div class="alert ok"><span class="ic" aria-hidden="true">✓</span><div class="t"><b>Rien à signaler</b><div class="small muted">Aucun prélèvement dans les ${state.params.alerteJours} prochains jours et aucun seuil franchi sur ${H} mois.</div></div><span></span></div>`}
+  </section>
+  <section class="kpis" aria-label="Chiffres clés">
+    <div class="kpi"><span class="lab">Trésorerie aujourd'hui</span><span class="val num">${esc(eur(tot))}</span><span class="sub">dont épargne ${esc(eur0(epargne))}</span></div>
+    <div class="kpi"><span class="lab">Prévue fin ${esc(fmtD(TODAY, { month: "long" }))}</span><span class="val num">${esc(eur(fin))}</span><span class="sub">${fin != null && tot != null ? esc(sgn(fin - tot)) + " d'ici là" : ""}</span></div>
+    <div class="kpi"><span class="lab">Point bas sur ${H} mois</span><span class="val num ${mn.v < 0 ? "neg" : ""}">${esc(eur(mn.v))}</span><span class="sub">${mn.d ? "le " + esc(fDate(mn.d)) : ""}</span></div>
+    <div class="kpi"><span class="lab">Reste à payer ce mois</span><span class="val num">${esc(eur(restPay + restVar))}</span><span class="sub">${restOps.length} prélèvement${restOps.length > 1 ? "s" : ""} + ${esc(eur0(restVar))} de variables</span></div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Trésorerie prévue</h2>
+      <label class="small muted">Horizon <select class="inline" data-param="horizonMois">${[1, 3, 6, 12, 24].map(n => `<option value="${n}"${n === H ? " selected" : ""}>${n} mois</option>`).join("")}</select></label></div>
+    <div id="ch-dash"></div>
+  </section>
+  <div class="grid2">
+    <section class="card"><div class="card-head"><h2>Prochaines opérations</h2><a class="btn sm" href="#planning">Planning</a></div>
+      <div class="list">${next.length ? next.map(r => opRow(r.d, r.op)).join("") : '<div class="empty">Aucune opération prévue. <button class="btn primary sm" data-act="add-op">Ajouter un prélèvement</button></div>'}</div></section>
+    <section class="card"><div class="card-head"><h2>Objectifs</h2><a class="btn sm" href="#objectifs">Gérer</a></div>
+      ${objs.length ? objs.map(([o, e]) => objBlock(o, e, true)).join("") : '<div class="empty">Fixe-toi un objectif d\'épargne ou un solde minimum. <button class="btn primary sm" data-act="add-obj">Ajouter un objectif</button></div>'}</section>
+  </div>
+  <div class="grid2">
+    <section class="card"><div class="card-head"><h2>Mes comptes</h2><a class="btn sm" href="#comptes">Gérer</a></div>
+      <div class="list">${state.comptes.map(a => `<div class="li"><span class="swatch" style="background:${accColor(a.id)}"></span><div class="main"><b>${esc(a.nom)}</b><div class="meta">${esc(a.utilite || TYPES[a.type] || "")}</div></div><div class="num">${esc(eur(valAt(sim, a.id, TODAY)))}</div></div>`).join("")}</div></section>
+    <section class="card"><div class="card-head"><h2>Budget mensuel moyen</h2><a class="btn sm" href="#operations">Détail</a></div>
+      <div class="list">
+        <div class="li"><span></span><div class="main">Revenus</div><div class="num pos">+${esc(eur(s.revenus))}</div></div>
+        <div class="li"><span></span><div class="main">Prélèvements et charges fixes</div><div class="num neg">−${esc(eur(s.charges))}</div></div>
+        <div class="li"><span></span><div class="main">Dépenses variables (moyenne)</div><div class="num neg">−${esc(eur(s.variables))}</div></div>
+        <div class="li"><span></span><div class="main"><b>Capacité d'épargne</b><div class="meta">dont ${esc(eur0(s.virements))} déjà virés en épargne chaque mois</div></div><div class="num ${s.reste < 0 ? "neg" : "pos"}"><b>${esc(sgn(s.reste))}</b></div></div>
+      </div></section>
+  </div>`;
+}
+function objBlock(o, e, compact) {
+  const pct = Math.max(0, Math.min(1, e.pct || 0));
+  return `<div class="obj${compact ? "" : " click"}" ${compact ? "" : `data-act="edit-obj" data-id="${o.id}" style="cursor:pointer"`}>
+    <div class="h"><b>${esc(o.libelle)}</b><span class="pill ${e.status}"><span aria-hidden="true">${ICON[e.status] || ""}</span>${esc(e.lab)}</span></div>
+    ${e.bar === false ? "" : `<div class="bar ${e.status}" role="progressbar" aria-valuenow="${Math.round(pct * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(pct * 100).toFixed(1)}%"></i></div>`}
+    <div class="m"><span>${esc(e.left)}</span><span>${esc(e.right)}</span></div>
+    ${compact ? "" : `<div class="small muted">${esc(e.detail)}</div>`}
+  </div>`;
+}
+
+function vPlanning() {
+  if (!state.comptes.length) return noAccount();
+  const m0 = ui.month, mEnd = monthEnd(m0);
+  const rows = opsBetween(m0, mEnd, opsActive());
+  const byDay = new Map(); rows.forEach(r => { if (!byDay.has(r.d)) byDay.set(r.d, []); byDay.get(r.d).push(r.op); });
+  const firstDow = (new Date(D(m0)).getUTCDay() + 6) % 7;
+  const gridStart = addDays(m0, -firstDow);
+  const cells = Math.ceil((firstDow + diffDays(m0, mEnd) + 1) / 7) * 7;
+  const k = o => o.sens === "credit" ? "c" : o.sens === "virement" ? "v" : "d";
+  let cal = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map(w => `<div class="wd">${w}</div>`).join("");
+  for (let i = 0; i < cells; i++) {
+    const d = addDays(gridStart, i), ops = byDay.get(d) || [];
+    const out = d < m0 || d > mEnd;
+    cal += `<button type="button" class="day${out ? " out" : ""}${d === TODAY ? " today" : ""}${d === ui.selDay ? " sel" : ""}" data-act="sel-day" data-d="${d}" aria-label="${esc(fDay(d))}, ${ops.length} opération(s)">
+      <span class="n">${+d.slice(8)}</span>
+      ${ops.slice(0, 3).map(o => `<span class="chip ${k(o)}">${esc(o.libelle)}</span>`).join("")}${ops.length > 3 ? `<span class="more">+${ops.length - 3}</span>` : ""}
+      <span class="dots">${ops.map(o => `<i class="${k(o)}"></i>`).join("")}</span></button>`;
+  }
+  const sel = ui.selDay && ui.selDay >= m0 && ui.selDay <= mEnd ? ui.selDay : null;
+  const selOps = sel ? opsBetween(sel, sel, opsActive()) : [];
+  const ins = rows.filter(r => r.op.sens === "credit").reduce((t, r) => t + r.op.montant, 0);
+  const outs = rows.filter(r => r.op.sens === "debit").reduce((t, r) => t + r.op.montant, 0);
+  return `<section class="card">
+    <div class="card-head"><div class="cal-nav"><button class="btn sm" data-act="month" data-k="-1" aria-label="Mois précédent">‹</button><h2>${esc(fMonth(m0))}</h2><button class="btn sm" data-act="month" data-k="1" aria-label="Mois suivant">›</button>
+      ${m0 !== monthStart(TODAY) ? '<button class="btn ghost sm" data-act="month" data-k="0">Aujourd\'hui</button>' : ""}</div>
+      <button class="btn primary sm" data-act="add-op">+ Opération</button></div>
+    <div class="cal">${cal}</div>
+    <div class="legend small" style="margin-top:10px"><span><span class="swatch" style="background:var(--debit)"></span>Prélèvement</span><span><span class="swatch" style="background:var(--credit)"></span>Revenu</span><span><span class="swatch" style="background:var(--vir)"></span>Virement</span></div>
+  </section>
+  ${sel ? `<section class="card"><div class="card-head"><h2>${esc(fmtD(sel, { weekday: "long", day: "numeric", month: "long" }))}</h2><button class="btn sm" data-act="add-op" data-date="${sel}">+ Ajouter ce jour</button></div>
+    <div class="list">${selOps.length ? selOps.map(r => opRow(r.d, r.op)).join("") : '<div class="empty">Aucune opération ce jour-là.</div>'}</div></section>` : ""}
+  <section class="card"><div class="card-head"><h2>Toutes les opérations du mois</h2>
+    <span class="small"><span class="num pos">+${esc(eur0(ins))}</span> · <span class="num neg">−${esc(eur0(outs))}</span></span></div>
+    <div class="list">${rows.length ? rows.map(r => opRow(r.d, r.op)).join("") : '<div class="empty">Aucune opération ce mois-ci.</div>'}</div></section>`;
+}
+
+function vOperations() {
+  if (!state.comptes.length) return noAccount();
+  const s = synthese();
+  const groups = [["debit", "Prélèvements et dépenses fixes"], ["credit", "Revenus"], ["virement", "Virements entre comptes"]];
+  const nextOf = op => occurrences(op, TODAY, addMonths(TODAY, 24))[0];
+  return `<section class="kpis">
+    <div class="kpi"><span class="lab">Revenus / mois</span><span class="val num pos">+${esc(eur(s.revenus))}</span></div>
+    <div class="kpi"><span class="lab">Charges fixes / mois</span><span class="val num neg">−${esc(eur(s.charges))}</span><span class="sub">annuels et trimestriels lissés</span></div>
+    <div class="kpi"><span class="lab">Virements épargne / mois</span><span class="val num virc">${esc(eur(s.virements))}</span></div>
+    <div class="kpi"><span class="lab">Reste après variables</span><span class="val num ${s.reste < 0 ? "neg" : ""}">${esc(sgn(s.reste))}</span><span class="sub">variables : ${esc(eur0(s.variables))} / mois</span></div>
+  </section>
+  ${groups.map(([k, t]) => {
+    const list = state.operations.filter(o => o.sens === k).sort((a, b) => (b.actif !== false) - (a.actif !== false) || (+(a.debut || "").slice(8) - +(b.debut || "").slice(8)));
+    return `<section class="card"><div class="card-head"><h2>${t}</h2><button class="btn sm${k === "debit" ? " primary" : ""}" data-act="add-op" data-sens="${k}">+ Ajouter</button></div>
+    <div class="list">${list.length ? list.map(o => {
+      const nx = nextOf(o), cls = k === "credit" ? "pos" : k === "virement" ? "virc" : "neg";
+      return `<div class="li click${o.actif === false ? " off" : ""}" data-act="edit-op" data-id="${o.id}">
+        <div class="dt">${o.freq === "hebdo" ? "chaque<b>sem.</b>" : o.freq === "ponctuel" ? `le<b>${+o.debut.slice(8)}</b>${esc(fmtD(o.debut, { month: "short" }))}` : `le<b>${+o.debut.slice(8)}</b>`}</div>
+        <div class="main"><b>${esc(o.libelle)}</b> ${o.actif === false ? '<span class="pill neutral">Suspendu</span>' : ""}
+          <div class="meta">${esc(FREQ[o.freq]?.l || "")} · ${k === "virement" ? esc(accName(o.compteId)) + " → " + esc(accName(o.compteDest)) : esc(accName(o.compteId))}${o.categorie ? " · " + esc(o.categorie) : ""}${nx ? " · prochain " + esc(fDate(nx)) : " · terminé"}</div></div>
+        <div style="text-align:right"><div class="num ${cls}">${esc(eur(o.montant))}</div>${o.freq !== "mensuel" && o.freq !== "ponctuel" ? `<div class="small muted num">${esc(eur(mensualise(o)))} / mois</div>` : ""}</div></div>`;
+    }).join("") : '<div class="empty small">Rien pour l\'instant.</div>'}</div></section>`;
+  }).join("")}`;
+}
+
+function vComptes() {
+  const sim = simulate(SIM_END());
+  return `<section class="card"><div class="card-head"><h2>Mes comptes</h2><button class="btn primary sm" data-act="add-compte">+ Compte</button></div>
+    ${state.comptes.length ? `<div class="accs">${state.comptes.map(a => {
+      const last = state.releves.filter(r => r.compteId === a.id).sort((x, y) => x.date < y.date ? 1 : -1)[0];
+      const v = valAt(sim, a.id, TODAY);
+      const nOps = state.operations.filter(o => o.compteId === a.id || o.compteDest === a.id).length;
+      return `<button type="button" class="acc" data-act="edit-compte" data-id="${a.id}">
+        <div class="h"><span style="display:flex;gap:8px;align-items:center"><span class="swatch" style="background:${accColor(a.id)}"></span><b>${esc(a.nom)}</b></span><span class="pill neutral">${esc(TYPES[a.type] || "")}</span></div>
+        <div class="bal num">${esc(eur(v))}</div>
+        <div class="use">${esc(a.utilite || "Utilité non renseignée")}</div>
+        <div class="small muted">${esc(a.banque || "")}${a.banque ? " · " : ""}${last ? "dernier solde saisi le " + esc(fDate(last.date)) : "aucun solde saisi"} · ${nOps} opération${nOps > 1 ? "s" : ""}${a.seuil != null && a.seuil !== "" ? " · alerte sous " + esc(eur0(a.seuil)) : ""}</div>
+      </button>`;
+    }).join("")}</div>` : '<div class="empty">Aucun compte. Ajoute ton compte courant pour commencer.</div>'}
+  </section>`;
+}
+
+function vSoldes() {
+  if (!state.comptes.length) return noAccount();
+  const sim = simulate(SIM_END());
+  const at = ui.atDate && ui.atDate >= sim.start && ui.atDate <= sim.to ? ui.atDate : TODAY;
+  const scope = ui.atAcc === "total" || accById(ui.atAcc) ? ui.atAcc : "total";
+  const v = valAt(sim, scope, at);
+  const isRel = scope !== "total" && state.releves.some(r => r.compteId === scope && r.date === at);
+  const nature = isRel ? ["ok", "Solde relevé"] : at > TODAY ? ["neutral", "Solde prévu"] : at === TODAY ? ["neutral", "Solde estimé ce jour"] : ["neutral", "Solde reconstitué"];
+  const rels = [...state.releves].filter(r => accById(r.compteId)).sort((a, b) => a.date < b.date ? 1 : -1);
+  setTimeout(() => {
+    const el = $("#ch-soldes"); if (!el) return;
+    const b = sim.idx.get(addMonths(TODAY, 3));
+    lineChart(el, { dates: sim.dates.slice(0, b + 1), series: state.comptes.map(a => ({ label: a.nom, color: accColor(a.id), values: sim.bal[a.id].slice(0, b + 1) })), height: 260 });
+  });
+  return `<section class="card"><div class="card-head"><h2>Solde à une date précise</h2></div>
+    <div class="form-grid">
+      <div class="field"><label for="at-date">Date</label><input type="date" id="at-date" value="${at}" min="${sim.start}" max="${sim.to}"></div>
+      <div class="field"><label for="at-acc">Compte</label><select id="at-acc">${accOptions(true).map(([k, l]) => `<option value="${esc(k)}"${k === scope ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
+      <div class="kpi" style="border:0;padding:0"><span class="lab">${esc(fDate(at))}</span><span class="val num ${v < 0 ? "neg" : ""}">${esc(v == null ? "Pas de donnée" : eur(v))}</span><span><span class="pill ${nature[0]}">${nature[1]}</span></span></div>
+    </div>
+    <p class="small muted" style="margin:10px 0 0">Calcul : dernier solde saisi avant la date, plus les opérations du planning, les dépenses variables saisies (passé) ou leur moyenne (futur).</p>
+  </section>
+  <section class="card"><div class="card-head"><h2>Évolution des soldes</h2><button class="btn primary sm" data-act="add-rel">+ Saisir un solde</button></div>
+    <div id="ch-soldes"></div><p class="small muted" style="margin:6px 0 0">La zone grisée à droite est la prévision sur 3 mois.</p></section>
+  <section class="card"><div class="card-head"><h2>Soldes saisis</h2><span class="small muted">L'écart compare le solde saisi au solde attendu par l'outil</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Compte</th><th class="r">Solde</th><th class="r">Écart vs prévu</th></tr></thead><tbody>
+    ${rels.length ? rels.map(r => { const e = sim.ecarts[r.id]; return `<tr class="click" data-act="edit-rel" data-id="${r.id}" style="cursor:pointer"><td class="num">${esc(fDate(r.date))}</td><td><span class="swatch" style="background:${accColor(r.compteId)}"></span> ${esc(accName(r.compteId))}</td><td class="r num">${esc(eur(r.solde))}</td><td class="r num ${e == null ? "muted" : Math.abs(e) < 0.5 ? "" : e < 0 ? "neg" : "pos"}">${e == null ? "—" : esc(sgn(e))}</td></tr>`; }).join("")
+      : '<tr><td colspan="4" class="muted">Aucun solde saisi. Saisis le solde actuel de chaque compte pour démarrer les prévisions.</td></tr>'}
+    </tbody></table></div></section>`;
+}
+
+function simuDefaults() {
+  return { lib: "Ordinateur", montant: "1200", date: addDays(TODAY, 15), compte: defaultAcc(), mode: "comptant", nb: "10", apport: "", frais: "" };
+}
+function simuExtra(p) {
+  const m = num(p.montant) || 0; if (!m || !p.date || !accById(p.compte)) return [];
+  const ex = [], base = { compteId: p.compte, sens: "debit", actif: true, categorie: "Investissement" };
+  if (p.mode === "comptant") ex.push({ ...base, id: "sim1", libelle: p.lib || "Achat", montant: m, freq: "ponctuel", debut: p.date });
+  else {
+    const nb = Math.max(1, Math.round(num(p.nb) || 1)), ap = Math.min(m, num(p.apport) || 0);
+    if (ap) ex.push({ ...base, id: "sim0", libelle: (p.lib || "Achat") + " – apport", montant: ap, freq: "ponctuel", debut: p.date });
+    const start = ap ? addMonths(p.date, 1) : p.date;
+    ex.push({ ...base, id: "sim1", libelle: (p.lib || "Achat") + ` – mensualité (${nb}x)`, montant: Math.round((m - ap) / nb * 100) / 100, freq: "mensuel", debut: start, fin: addMonths(start, nb - 1) });
+  }
+  const fr = num(p.frais); if (fr) ex.push({ ...base, id: "sim2", libelle: (p.lib || "Achat") + " – frais mensuels", montant: fr, freq: "mensuel", debut: p.date, categorie: "Charges" });
+  return ex;
+}
+function vPrevision() {
+  if (!state.comptes.length) return noAccount();
+  const H = ui.horizon || 6, end = addMonths(TODAY, H);
+  const scope = ui.scope === "total" || accById(ui.scope) ? ui.scope : "total";
+  const sim = simulate(SIM_END());
+  const acc = scope === "total" ? null : accById(scope);
+  const seuil = acc && acc.seuil != null && acc.seuil !== "" ? +acc.seuil : null;
+  const rows = [];
+  let m = monthStart(TODAY);
+  const inArr = scope === "total" ? sim.inT : sim.inA[scope], outArr = scope === "total" ? sim.outT : sim.outA[scope], arr = series(sim, scope);
+  while (m <= end) {
+    const isCur = m === monthStart(TODAY);
+    const a = isCur ? sim.idx.get(TODAY) + 1 : sim.idx.get(m), bEnd = Math.min(sim.idx.get(monthEnd(m)), sim.idx.get(end));
+    const deb = isCur ? arr[sim.idx.get(TODAY)] : arr[a - 1];
+    let ins = 0, outs = 0, low = null;
+    for (let i = a; i <= bEnd; i++) { ins += inArr[i]; outs += outArr[i]; if (arr[i] != null && (low == null || arr[i] < low)) low = arr[i]; }
+    rows.push({ m, deb, ins, outs, fin: arr[bEnd], low, partial: isCur, cut: !isCur && monthEnd(m) > end });
+    m = addMonths(m, 1, 1);
+  }
+  ui.simu = ui.simu || simuDefaults();
+  if (!accById(ui.simu.compte)) ui.simu.compte = defaultAcc();
+  setTimeout(() => {
+    const el = $("#ch-prev"); if (!el) return;
+    const a = sim.idx.get(TODAY), b = sim.idx.get(end);
+    lineChart(el, { dates: sim.dates.slice(a, b + 1), series: [{ label: scope === "total" ? "Trésorerie totale" : acc.nom, color: scope === "total" ? "var(--accent)" : accColor(scope), values: arr.slice(a, b + 1) }], seuil, todayLine: false });
+    renderSimu();
+  });
+  const p = ui.simu;
+  return `<section class="card">
+    <div class="card-head"><h2>Trésorerie future</h2>
+      <div class="row-actions">
+        <select class="inline" id="pv-scope" aria-label="Compte">${accOptions(true).map(([k, l]) => `<option value="${esc(k)}"${k === scope ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
+        <select class="inline" id="pv-h" aria-label="Horizon">${[1, 3, 6, 12, 24].map(n => `<option value="${n}"${n === H ? " selected" : ""}>${n} mois</option>`).join("")}</select>
+      </div></div>
+    <div id="ch-prev"></div>
+    <div class="tbl-wrap" style="margin-top:12px"><table><thead><tr><th>Mois</th><th class="r">Début</th><th class="r">Entrées</th><th class="r">Sorties</th><th class="r">Fin</th><th class="r">Point bas</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td><span style="text-transform:capitalize">${esc(fMonth(r.m))}</span>${r.partial ? ' <span class="small muted">(dès demain)</span>' : r.cut ? ` <span class="small muted">(jusqu'au ${+end.slice(8)})</span>` : ""}</td><td class="r num">${esc(eur0(r.deb))}</td><td class="r num pos">+${esc(eur0(r.ins))}</td><td class="r num neg">−${esc(eur0(r.outs))}</td><td class="r num"><b>${esc(eur0(r.fin))}</b></td><td class="r num ${r.low < 0 ? "neg" : seuil != null && r.low < seuil ? "neg" : ""}">${esc(eur0(r.low))}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="small muted" style="margin:8px 0 0">${scope === "total" ? "Les virements entre tes comptes ne comptent ni en entrée ni en sortie sur le total." : "Les sorties incluent les virements vers tes autres comptes et le budget variable moyen."}</p>
+  </section>
+  <section class="card" id="simu">
+    <div class="card-head"><h2>Simuler un achat ou un investissement</h2></div>
+    <div class="form-grid" id="simu-form">
+      <div class="field"><label for="sm-lib">Achat</label><input id="sm-lib" value="${esc(p.lib)}"></div>
+      <div class="field"><label for="sm-montant">Prix total</label><input id="sm-montant" inputmode="decimal" value="${esc(p.montant)}"></div>
+      <div class="field"><label for="sm-date">Date d'achat</label><input id="sm-date" type="date" value="${esc(p.date)}" min="${TODAY}"></div>
+      <div class="field"><label for="sm-compte">Payé depuis</label><select id="sm-compte">${accOptions().map(([k, l]) => `<option value="${esc(k)}"${k === p.compte ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
+      <div class="field"><label for="sm-mode">Paiement</label><select id="sm-mode"><option value="comptant"${p.mode === "comptant" ? " selected" : ""}>Comptant</option><option value="credit"${p.mode === "credit" ? " selected" : ""}>En plusieurs fois / crédit</option></select></div>
+      <div class="field" data-cr ${p.mode === "credit" ? "" : "hidden"}><label for="sm-nb">Nombre de mensualités</label><input id="sm-nb" inputmode="numeric" value="${esc(p.nb)}"></div>
+      <div class="field" data-cr ${p.mode === "credit" ? "" : "hidden"}><label for="sm-apport">Apport</label><input id="sm-apport" inputmode="decimal" value="${esc(p.apport)}" placeholder="0"></div>
+      <div class="field"><label for="sm-frais">Frais mensuels induits</label><input id="sm-frais" inputmode="decimal" value="${esc(p.frais)}" placeholder="Assurance, entretien…"></div>
+    </div>
+    <div id="simu-res" style="margin-top:14px"></div>
+  </section>`;
+}
+function renderSimu() {
+  const host = $("#simu-res"); if (!host) return;
+  const p = ui.simu, ex = simuExtra(p);
+  if (!ex.length) { host.innerHTML = '<div class="empty small">Indique un prix, une date et un compte pour voir l\'impact.</div>'; return; }
+  const end = addMonths(TODAY, Math.max(ui.horizon || 6, 12));
+  const base = simulate(SIM_END()), avec = simulate(SIM_END(), ex);
+  const acc = accById(p.compte), seuil = acc.seuil != null && acc.seuil !== "" ? +acc.seuil : null;
+  const mnS = minOver(base, p.compte, TODAY, end), mnA = minOver(avec, p.compte, TODAY, end);
+  const finS = valAt(base, p.compte, end), finA = valAt(avec, p.compte, end);
+  const neg = firstBelow(avec, p.compte, 0, TODAY, end), low = seuil != null ? firstBelow(avec, p.compte, seuil, TODAY, end) : null;
+  const ver = neg ? ["crit", `Découvert prévu le ${fDate(neg.d)} (${eur(neg.v)})`] : low ? ["warn", `Passage sous ton seuil de ${eur0(seuil)} le ${fDate(low.d)}`] : ["ok", "Achat supportable sans passer sous ton seuil"];
+  const cost = ex.reduce((t, o) => t + o.montant * (o.freq === "ponctuel" ? 1 : occurrences(o, TODAY, end).length), 0);
+  host.innerHTML = `<div class="alert ${ver[0]}"><span class="ic" aria-hidden="true">${ICON[ver[0]]}</span><div class="t"><b>${esc(ver[1])}</b><div class="small muted">Analyse du compte « ${esc(acc.nom)} » jusqu'au ${esc(fDate(end))}</div></div><span></span></div>
+    <div class="verdict" style="margin:14px 0">
+      <div class="cmp"><div class="lab">Point bas</div><div class="v num">${esc(eur0(mnS.v))} → <b class="${mnA.v < 0 ? "neg" : ""}">${esc(eur0(mnA.v))}</b></div><div class="small muted">${mnA.d ? "le " + esc(fDate(mnA.d)) : ""}</div></div>
+      <div class="cmp"><div class="lab">Solde au ${esc(fDate(end))}</div><div class="v num">${esc(eur0(finS))} → <b>${esc(eur0(finA))}</b></div></div>
+      <div class="cmp"><div class="lab">Coût sur la période</div><div class="v num"><b>${esc(eur(cost))}</b></div><div class="small muted">${esc(ex.map(o => o.freq === "ponctuel" ? eur0(o.montant) + " le " + fDate(o.debut) : eur(o.montant) + " / mois").join(" + "))}</div></div>
+    </div>
+    <div id="ch-simu"></div>
+    <div class="row-actions" style="margin-top:12px"><button class="btn primary" data-act="simu-add">Ajouter cet achat au planning</button><span class="small muted">Crée ${ex.length} opération${ex.length > 1 ? "s" : ""} dans tes prélèvements.</span></div>`;
+  const a = base.idx.get(TODAY), b = base.idx.get(end);
+  lineChart($("#ch-simu"), { dates: base.dates.slice(a, b + 1), seuil, todayLine: false, height: 220, series: [
+    { label: "Sans l'achat", color: "var(--muted)", dash: true, values: base.bal[p.compte].slice(a, b + 1) },
+    { label: "Avec l'achat", color: "var(--accent)", values: avec.bal[p.compte].slice(a, b + 1) },
+  ] });
+}
+
+function vVariables() {
+  const N = state.params.moisMoyenne || 3, months = lastMonths(N), cur = ym(TODAY);
+  const cats = state.categories;
+  let totAvg = 0, totBud = 0, totCur = 0;
+  const colTot = months.map(() => 0);
+  const body = cats.map(c => {
+    const mo = moyenne(c), bud = budgetCat(c), sc = spend(c.nom, cur);
+    if (c.inclure) { totAvg += mo.avg; totBud += bud; totCur += sc; months.forEach((m, i) => colTot[i] += spend(c.nom, m)); }
+    const r = bud ? sc / bud : 0;
+    return `<tr class="${c.inclure ? "" : "muted"}"><td><button class="btn ghost sm" data-act="edit-cat" data-id="${c.id}" style="padding-left:0">${esc(c.nom)}</button></td>
+      ${months.map(m => `<td class="r num">${esc(eur0(spend(c.nom, m)))}</td>`).join("")}
+      <td class="r num"><b>${esc(eur0(mo.avg))}</b>${mo.n && mo.n < N ? `<div class="small muted">sur ${mo.n} mois</div>` : ""}</td>
+      <td class="r num">${esc(eur0(bud))}${c.fixe != null && c.fixe !== "" ? '<div class="small muted">fixé</div>' : ""}</td>
+      <td class="r"><span class="pill ${c.inclure ? "ok" : "neutral"}">${c.inclure ? "Inclus" : "Exclu"}</span></td>
+      <td style="min-width:130px"><div class="small num">${esc(eur0(sc))} / ${esc(eur0(bud))}</div><div class="bar ${r > 1 ? "crit" : r > 0.8 ? "warn" : "ok"}"><i style="width:${Math.min(100, r * 100).toFixed(0)}%"></i></div></td></tr>`;
+  }).join("");
+  const recent = [...state.depenses].sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 40);
+  const lastCat = ui.lastCat && cats.some(c => c.nom === ui.lastCat) ? ui.lastCat : cats[0]?.nom;
+  return `<section class="card"><div class="card-head"><h2>Saisir une dépense</h2><span class="small muted">Courses, plein d'essence… ou un total mensuel daté du dernier jour du mois</span></div>
+    ${cats.length ? `<form id="dep-form" class="form-grid" novalidate>
+      <div class="field"><label for="dp-date">Date</label><input type="date" id="dp-date" value="${esc(ui.lastDate || TODAY)}" max="${TODAY}"></div>
+      <div class="field"><label for="dp-cat">Catégorie</label><select id="dp-cat">${cats.map(c => `<option${c.nom === lastCat ? " selected" : ""}>${esc(c.nom)}</option>`).join("")}</select></div>
+      <div class="field"><label for="dp-montant">Montant</label><input id="dp-montant" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
+      ${state.comptes.length > 1 ? `<div class="field"><label for="dp-acc">Payé avec</label><select id="dp-acc">${accOptions().map(([k, l]) => `<option value="${esc(k)}"${k === (ui.lastAcc || defaultAcc()) ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></div>` : ""}
+      <div class="field"><label for="dp-note">Note</label><input id="dp-note" placeholder="Facultatif"></div>
+      <div class="field"><button class="btn primary" type="submit">Ajouter</button></div>
+    </form>` : '<div class="empty">Crée d\'abord une catégorie.</div>'}
+  </section>
+  <section class="card"><div class="card-head"><h2>Moyennes à intégrer au budget</h2>
+    <div class="row-actions"><label class="small muted">Moyenne sur <select class="inline" data-param="moisMoyenne">${[1, 2, 3, 6, 12].map(n => `<option value="${n}"${n === N ? " selected" : ""}>${n} mois</option>`).join("")}</select></label>
+    <button class="btn sm" data-act="add-cat">+ Catégorie</button></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Catégorie</th>${months.map(m => `<th class="r">${esc(fMonthS(m + "-01"))}</th>`).join("")}<th class="r">Moyenne</th><th class="r">Budget retenu</th><th class="r">Prévisions</th><th>${esc(fmtD(TODAY, { month: "long" }))}</th></tr></thead>
+    <tbody>${body}<tr class="tot"><td>Total inclus</td>${colTot.map(v => `<td class="r num">${esc(eur0(v))}</td>`).join("")}<td class="r num">${esc(eur0(totAvg))}</td><td class="r num">${esc(eur0(totBud))}</td><td></td><td class="num small">${esc(eur0(totCur))} / ${esc(eur0(totBud))}</td></tr></tbody></table></div>
+    <p class="small muted" style="margin:8px 0 0">Le budget retenu des catégories incluses est ajouté aux prévisions, étalé sur chaque jour du mois. Le mois en cours n'entre pas dans la moyenne. Touche une catégorie pour fixer un budget à la main.</p>
+  </section>
+  <section class="card"><div class="card-head"><h2>Dernières dépenses</h2><span class="small muted">${state.depenses.length} au total</span></div>
+    <div class="list">${recent.length ? recent.map(e => `<div class="li"><div class="dt">${esc(fmtD(e.date, { weekday: "short" }))}<b>${+e.date.slice(8)}</b>${esc(fmtD(e.date, { month: "short" }))}</div>
+      <div class="main"><b>${esc(e.categorie)}</b><div class="meta">${esc(e.note || "")}${e.note ? " · " : ""}${esc(accName(e.compteId || defaultAcc()))}</div></div>
+      <div class="row-actions"><span class="num neg">−${esc(eur(e.montant))}</span><button class="btn ghost sm danger" data-act="del-dep" data-id="${e.id}" aria-label="Supprimer">Suppr.</button></div></div>`).join("") : '<div class="empty">Aucune dépense saisie. Ajoute tes courses ou pleins des derniers mois pour calculer une moyenne.</div>'}</div>
+  </section>`;
+}
+
+function vObjectifs() {
+  const sim = simulate(SIM_END());
+  return `<section class="card"><div class="card-head"><h2>Mes objectifs</h2><button class="btn primary sm" data-act="add-obj">+ Objectif</button></div>
+    ${state.objectifs.length ? state.objectifs.map(o => objBlock(o, evalObj(o, sim), false)).join("") : '<div class="empty">Aucun objectif. Exemples : 5 000 € sur le livret d\'ici un an, jamais moins de 200 € sur le compte courant, 350 € de courses par mois au maximum, 10 % de taux d\'épargne.</div>'}
+  </section>
+  <section class="card"><h2 style="margin-bottom:8px">Comment sont calculés les indicateurs</h2>
+    <div class="list small">
+      <div class="li"><span class="pill neutral">Épargne</span><div class="main">Solde actuel du compte comparé à la cible ; « en bonne voie » si le solde prévu à l'échéance l'atteint. L'effort mensuel est ce qu'il reste à mettre de côté chaque mois.</div><span></span></div>
+      <div class="li"><span class="pill neutral">Minimum</span><div class="main">Point le plus bas prévu sur l'horizon du tableau de bord (${state.params.horizonMois} mois).</div><span></span></div>
+      <div class="li"><span class="pill neutral">Plafond</span><div class="main">Dépenses saisies du mois en cours dans la catégorie, et moyenne des mois passés.</div><span></span></div>
+      <div class="li"><span class="pill neutral">Taux</span><div class="main">(Revenus − charges fixes − dépenses variables moyennes) ÷ revenus, en équivalent mensuel.</div><span></span></div>
+    </div></section>`;
+}
+
+/* ---------- Rendu & navigation ---------- */
+function currentTab() { const h = location.hash.slice(1); return TABS.some(t => t[0] === h) ? h : "tableau"; }
+function render() {
+  charts.length = 0;
+  const tab = currentTab();
+  let nAl = 0;
+  try { if (state.comptes.length) nAl = computeAlerts(simulate(SIM_END())).length; } catch {}
+  $("#tabs").innerHTML = TABS.map(([k, l]) => `<a href="#${k}"${k === tab ? ' aria-current="page"' : ""}>${l}${k === "tableau" && nAl ? `<span class="badge">${nAl}</span>` : ""}</a>`).join("");
+  const fn = { tableau: vTableau, planning: vPlanning, operations: vOperations, comptes: vComptes, soldes: vSoldes, prevision: vPrevision, variables: vVariables, objectifs: vObjectifs }[tab];
+  view().innerHTML = (mode === "loading" ? '<span class="loading-flag" hidden></span>' : "") + fn();
+  $("#tabs [aria-current]")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-act]"); if (!t) return;
+  const id = t.dataset.id, act = t.dataset.act;
+  switch (act) {
+    case "add-compte": return formCompte();
+    case "edit-compte": return formCompte(accById(id));
+    case "add-op": return formOperation(null, { ...(t.dataset.sens ? { sens: t.dataset.sens } : {}), ...(t.dataset.date ? { debut: t.dataset.date, freq: "ponctuel" } : {}) });
+    case "edit-op": return formOperation(state.operations.find(o => o.id === id));
+    case "add-rel": return formReleve();
+    case "edit-rel": return formReleve(state.releves.find(r => r.id === id));
+    case "add-cat": return formCategorie();
+    case "edit-cat": return formCategorie(state.categories.find(c => c.id === id));
+    case "add-obj": if (!state.comptes.length) { toast("Crée d'abord un compte."); return; } return formObjectif();
+    case "edit-obj": return formObjectif(state.objectifs.find(o => o.id === id));
+    case "sel-day": ui.selDay = t.dataset.d; if (t.dataset.d < ui.month || t.dataset.d > monthEnd(ui.month)) ui.month = monthStart(t.dataset.d); saveUi(); render(); return;
+    case "month": { const k = +t.dataset.k; ui.month = k === 0 ? monthStart(TODAY) : addMonths(ui.month, k, 1); ui.selDay = k === 0 ? TODAY : null; saveUi(); render(); return; }
+    case "del-dep":
+      if (t.dataset.armed !== "1") { t.dataset.armed = "1"; t.classList.add("armed"); t.textContent = "Confirmer"; setTimeout(() => { if (t.isConnected) { t.dataset.armed = ""; t.classList.remove("armed"); t.textContent = "Suppr."; } }, 3500); return; }
+      state.depenses = state.depenses.filter(x => x.id !== id); persist(); toast("Dépense supprimée"); return;
+    case "clear-ex":
+      if (t.dataset.armed !== "1") { t.dataset.armed = "1"; t.classList.add("armed"); t.textContent = "Confirmer : tout effacer"; return; }
+      state = emptyState(); persist(); toast("Exemples effacés. Commence par ajouter tes comptes."); location.hash = "comptes"; return;
+    case "simu-add": {
+      const ex = simuExtra(ui.simu); if (!ex.length) return;
+      ex.forEach(o => state.operations.push({ ...o, id: uid() }));
+      persist(); toast("Achat ajouté au planning"); return;
+    }
+  }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.param) { state.params[t.dataset.param] = +t.value; persist(); return; }
+  if (t.id === "at-date") { ui.atDate = t.value; saveUi(); render(); return; }
+  if (t.id === "at-acc") { ui.atAcc = t.value; saveUi(); render(); return; }
+  if (t.id === "pv-scope") { ui.scope = t.value; saveUi(); render(); return; }
+  if (t.id === "pv-h") { ui.horizon = +t.value; saveUi(); render(); return; }
+});
+let simuT;
+document.addEventListener("input", e => {
+  const t = e.target; if (!t.id?.startsWith("sm-")) return;
+  ui.simu[t.id.slice(3)] = t.value;
+  if (t.id === "sm-mode") document.querySelectorAll("[data-cr]").forEach(el => el.hidden = t.value !== "credit");
+  clearTimeout(simuT); simuT = setTimeout(() => { saveUi(); renderSimu(); }, 250);
+});
+document.addEventListener("submit", e => {
+  if (e.target.id !== "dep-form") return;
+  e.preventDefault();
+  const m = num($("#dp-montant").value), date = $("#dp-date").value, cat = $("#dp-cat").value;
+  if (!(m > 0)) { toast("Indique un montant positif."); $("#dp-montant").focus(); return; }
+  if (!date || date > TODAY) { toast("Choisis une date passée ou aujourd'hui."); return; }
+  const acc = $("#dp-acc")?.value || defaultAcc();
+  state.depenses.push({ id: uid(), date, categorie: cat, montant: m, compteId: acc, note: $("#dp-note").value.trim() });
+  ui.lastCat = cat; ui.lastDate = date; ui.lastAcc = acc;
+  persist(); toast(`${eur(m)} ajoutés en ${cat}`);
+  setTimeout(() => $("#dp-montant")?.focus(), 0);
+});
+
+$("#today-label").textContent = fmtD(TODAY, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+render();
+initStore();
+})();
+</script>
